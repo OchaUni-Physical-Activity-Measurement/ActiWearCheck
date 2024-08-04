@@ -1,0 +1,16 @@
+.ipynb_checkpoints
+.vscode
+# Ignore macOS temporary files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.fseventsd
+C:\Users\Julien\Desktop\Repos-GH\ActiWearCheck\samples\day
+C:\Users\Julien\Desktop\Repos-GH\ActiWearCheck\samples\HR
+C:\Users\Julien\Desktop\Repos-GH\ActiWearCheck\samples\min
+*~

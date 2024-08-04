@@ -1,0 +1,9 @@
+hourly: False
+waking: False
+threshold: 600
+parameter: "calories"
+forced_steps_minutes: False
+alignment_check: False
+alignment_arg: 0.9
+synch_check: False
+synch_arg: []
