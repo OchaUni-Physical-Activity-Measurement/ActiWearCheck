@@ -33,10 +33,13 @@ def check_configuration_integrity(configurations, paths):
     if "all" in parameter:
         configurations["parameter"] = _all_parameters
         parameter = _all_parameters
+    if not isinstance(parameter, list):
+        configurations["parameter"] = [configurations["parameter"]]
+        parameter = [parameter]
     threshold = configurations["threshold"]
     for key in threshold:
+        th = threshold[key]
         if key == "hourly":
-            th = threshold["hourly"]
             if not isinstance(th, list) or len(th) !=2:
                 print("error, 'hourly' set to True, 'threshold' should be a list of two values")
                 return False
@@ -53,18 +56,18 @@ def check_configuration_integrity(configurations, paths):
             if (th[0] == 0) or (th[1] == 0):
                 print("warning, thresholds set to 0")
         else:
-            if not isinstance(threshold[key], int):
-                print("error, 'hourly' set to False, 'threshold' should be an integer")
+            if not isinstance(th, int):
+                print(f"error, threshold for {key} should be an integer")
                 return False
 
-            if (threshold[key] < 0):
+            if (th < 0):
                 print("error, time parameter set to negative")
                 return False
-            if (threshold[key] == 0):
+            if (th == 0):
                 print("warning, threshold sets to 0")
 
     
-    if "HR" in parameter and threshold["HR"] > 1440:
+    if "HR" in parameter and threshold["base"] > 1440:
         print("error, a day contains 1440 minutes only")
         return False
 
@@ -207,6 +210,31 @@ def ActiWearCheck(data_path,configurations,debug=False):
 
     if debug:
         print(configurations)
+
+    if "HR" in configurations["parameter"]:
+        all_HR_data = {} # TODO: strange; should be a list, and then concatenate at the end   
+        for file in files["HR"]:
+            if debug:
+                print("Analyzing", file)
+            id_ = os.path.basename(file)[1:] # TODO: Ask julien about the first character (0 or 1)
+            id_=id_.split("_")[0]
+            series="TotalMinutesWearTime"
+            data=pd.read_csv(file).set_index("Day")
+            data.index = pd.to_datetime(data.index)
+            data["ID"] = id_
+            data=data[["ID",series]]
+            if configurations["waking"]:    
+                data=data.between_time('5:00','22:59')
+            data['HR-worn'] = data[series] >= configurations["threshold"]["base"]
+            #data["HR-worn"] = data[series].apply(worn_continue)
+            all_HR_data[id_] = data
+            if debug:
+                print("one file finished")
+        if debug:
+            for indiv in all_HR_data:
+                print(all_HR_data[indiv])
+
+
 
 def read_configurations(config_path):
     with open(config_path, 'r') as yml:
