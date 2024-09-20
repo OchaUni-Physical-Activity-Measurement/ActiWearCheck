@@ -8,87 +8,145 @@ import os
 import yaml
 import pandas as pd
 
+######################
+# GLOBAL VARIABLE
+######################
 
-#####################
+_all_parameters = ["HR", "calories", "steps"]
+######################
 # SETUP
-#####################
+######################
 
-def parameter_consistency_check(configurations):
+def check_configuration_integrity(configurations, paths):
+    """
+    Convenience function to check that settings are meaningful and found files are consistent
+
+    configurations: dictionary of configurations
+
+    paths: dictionary of path lists. Each list corresponds to a type of file, described by one of the keys
+    such as "HR", "Cal", "Step", "Step_d", "Align", and "Synch"
+    """
+    #TODO: auto generate the key list?
+
     parameter = configurations["parameter"]
+    # Just in case configuration was built/loaded differently
+    if "all" in parameter:
+        configurations["parameter"] = _all_parameters
+        parameter = _all_parameters
     threshold = configurations["threshold"]
-    if configurations["hourly"]:
-        if not isinstance(threshold, list) or len(threshold) !=2:
-            print("error, 'hourly' set to True, 'threshold' should be a list of two values")
-            return False
+    for key in threshold:
+        if key == "hourly":
+            th = threshold["hourly"]
+            if not isinstance(th, list) or len(th) !=2:
+                print("error, 'hourly' set to True, 'threshold' should be a list of two values")
+                return False
 
-        if threshold[0] > 24:
-            print("error, a day contains 24 hours only")
-            return False
-        if threshold[1] > 60:
-            print("error, an hour contains 60 minutes only")
-            return False
-        if (threshold[0] < 0) or (threshold[1] < 0):
-            print("error, time parameter set to negative")
-            return False
-        if (threshold[0] == 0) or (threshold[1] == 0):
-            print("warning, thresholds set to 0")
-    else:
-        if not isinstance(threshold, int):
-            print("error, 'hourly' set to False, 'threshold' should be an integer")
-            return False
+            if th[0] > 24:
+                print("error, a day contains 24 hours only")
+                return False
+            if th[1] > 60:
+                print("error, an hour contains 60 minutes only")
+                return False
+            if (th[0] < 0) or (th[1] < 0):
+                print("error, time parameter set to negative")
+                return False
+            if (th[0] == 0) or (th[1] == 0):
+                print("warning, thresholds set to 0")
+        else:
+            if not isinstance(threshold[key], int):
+                print("error, 'hourly' set to False, 'threshold' should be an integer")
+                return False
 
-        if (threshold < 0):
-            print("error, time parameter set to negative")
-            return False
-        if (threshold == 0):
-            print("warning, threshold sets to 0")
+            if (threshold[key] < 0):
+                print("error, time parameter set to negative")
+                return False
+            if (threshold[key] == 0):
+                print("warning, threshold sets to 0")
 
     
-    if parameter == "HR" and threshold > 1440:
+    if "HR" in parameter and threshold["HR"] > 1440:
         print("error, a day contains 1440 minutes only")
         return False
 
-    # TODO
+
+    if "HR" in parameter:
+        if len(paths["HR"]) == 0:
+            print("HR data files not found")
+            return False
+    if "calories" in parameter:
+        if len(paths["Cal"]) == 0:
+            print("EE data files not found")
+            return
+    if "steps" in parameter:
+        if len(paths["Step"]) == 0:
+            print("Step data files not found")
+            return
+     
+    # checking configuration for "alignment_check and alignment_arg"
+    if configurations["alignment_check"] == False:
+        print("Not checking data alignment")
+    else:
+        alignment_arg = configurations["alignment_arg"]
+        if alignment_arg > 1:
+            print("error, 'alignment_arg' should be a float between 0 and 1")
+            return False
+        if alignment_arg < 0:
+            print("error, 'alignment_arg' should be a float between 0 and 1")
+            return False
+        if "calories" not in parameter:
+            print("warning. data alignment check currently only supported for calories data, 'alignement_arg' set to 1.0")
+            configurations["alignment_arg"] = 1.0
+            
+        if len(paths["Align"]) != len(paths["Cal"]):
+            print("error the number of dailyCalories and minuteCalories files is different")
+            return False
     
     return True
 
 
-def get_files(data_path,configurations):
+
+
+def get_files(data_path,debug=False):
     # For Fitabase only
-    HR_suffix = "fitbitWearTimeViaHR"
-    Cal_suffix = "minuteCaloriesNarrow"
-    Step_suffix = "minuteStepsNarrow"
-    Step_d_suffix = "dailySteps"    
-    Align_suffix = "dailyCalories"
-    Synch_suffix = "syncEvents"    
-    
+    suffixes = {"fitbitWearTimeViaHR": "HR", "minuteCaloriesNarrow": "Cal", 
+        "minuteStepsNarrow": "Step", "dailySteps": "Step_d", "dailyCalories": "Align", "syncEvents": "Synch"}    
     # getting paths of interest
-    HR_paths = []
-    Cal_paths = []
-    Step_paths = []
-    Step_d_paths = []
-    Align_paths = []
-    Synch_paths = []
-    for file in sorted(os.listdir(path)):
+    paths = {"HR": [], "Cal": [], "Step": [], "Step_d": [], "Align": [], "Synch": []}
+    
+    for file in sorted(os.listdir(data_path)):
         if ".csv" in file:
-            if HR_suffix in file:
-                HR_paths.append(os.path.join(path,file))
-            if Cal_suffix in file:
-                Cal_paths.append(os.path.join(path,file))       
-            if Step_suffix in file:
-                Step_paths.append(os.path.join(path,file))
-            if Step_d_suffix in file:
-                Step_d_paths.append(os.path.join(path,file))         
-            if Align_suffix in file:
-                Align_paths.append(os.path.join(path,file))
-            if Synch_suffix in file:
-                Synch_paths.append(os.path.join(path,file))    
-    #TODO NAT
+            for key in suffixes:
+                if key in file: # TODO Check with Julien: actually should be at the end of the file?
+                    paths[suffixes[key]].append(os.path.join(data_path,file))
+            
+    #TODO CHECK
+    # if parameter == "steps":
+    #     if hourly == True and forced_steps_minutes == False :
+    #         Step_paths = Step_paths
+    #     elif hourly == False and forced_steps_minutes == False :
+    #         Step_paths = Step_d_paths 
+    #         Steps_suffix = Step_d_suffix
+    #         if waking:
+    #             waking = False
+    #             print("waking was desactivated, analysis not possible with daily data summaries")
+    #     elif forced_steps_minutes:
+    #         hourly = False
+    #         Step_paths = Step_paths
+    #     else:
+    #         print("problems related to step settings, please check alignement between 'parameter' and 'forced_steps_minutes' ")
+
+    if debug:
+        print("HR paths : ", paths["HR"])
+        print("Cal paths : ", paths["Cal"])
+        print("Step paths : ", paths["Step"])
+    
+    return paths
+
 
 ####################
 # MAIN CHECK
 ####################
-def ActiWearCheck(data_path,configurations):
+def ActiWearCheck(data_path,configurations,debug=False):
     """
     data_path : None or string
     if None, take the files in the current directory.
@@ -135,15 +193,26 @@ def ActiWearCheck(data_path,configurations):
 
     if data_path is None:
         data_path = os.getcwd()
-
-    if not check_configuration_integrity(configurations):
-        return
         
-    print(configurations)
+
+    files = get_files(data_path,debug=debug)
+
+    if debug:
+        files
+
+    # data_out = {} #???
+
+    if not check_configuration_integrity(configurations, files):
+        return
+
+    if debug:
+        print(configurations)
 
 def read_configurations(config_path):
     with open(config_path, 'r') as yml:
         config = yaml.safe_load(yml)
+    if config["parameter"] == "all" or "all" in config["parameter"]:
+        config["parameter"] = _all_parameters
     return config
 
 if __name__ == "__main__":
@@ -155,4 +224,4 @@ if __name__ == "__main__":
 
     configurations = read_configurations(args.configFilename)
     
-    ActiWearCheck(args.dataFilepath,configurations)
+    ActiWearCheck(args.dataFilepath,configurations, debug=True)

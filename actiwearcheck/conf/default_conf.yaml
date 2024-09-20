@@ -1,6 +1,8 @@
 hourly: False
 waking: False
-threshold: 600
+threshold: 
+  base: 600
+  hourly: [1, 24]
 parameter: "calories"
 forced_steps_minutes: False
 alignment_check: False
