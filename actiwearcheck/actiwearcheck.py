@@ -9,11 +9,6 @@ import yaml
 import pandas as pd
 
 ######################
-# GLOBAL VARIABLE
-######################
-
-_all_parameters = ["HR", "calories", "steps"]
-######################
 # SETUP
 ######################
 
@@ -28,18 +23,17 @@ def check_configuration_integrity(configurations, paths):
     """
     #TODO: auto generate the key list?
 
-    parameter = configurations["parameter"]
+    method = configurations["method"]
     # Just in case configuration was built/loaded differently
-    if "all" in parameter:
-        configurations["parameter"] = _all_parameters
-        parameter = _all_parameters
-    if not isinstance(parameter, list):
-        configurations["parameter"] = [configurations["parameter"]]
-        parameter = [parameter]
-    threshold = configurations["threshold"]
-    for key in threshold:
-        th = threshold[key]
-        if key == "hourly":
+    if "all" in method:
+        configurations["method"] = configurations["all_methods"]
+        method = configurations["all_methods"]
+    if not isinstance(method, list):
+        configurations["method"] = [configurations["method"]]
+        method = [method]
+    for key in method: # check settings are valid
+        th = configurations[key] # get the relevant settings
+        if key == "calories_hourly":
             if not isinstance(th, list) or len(th) !=2:
                 print("error, 'hourly' set to True, 'threshold' should be a list of two values")
                 return False
@@ -51,7 +45,7 @@ def check_configuration_integrity(configurations, paths):
                 print("error, an hour contains 60 minutes only")
                 return False
             if (th[0] < 0) or (th[1] < 0):
-                print("error, time parameter set to negative")
+                print("error, time method set to negative")
                 return False
             if (th[0] == 0) or (th[1] == 0):
                 print("warning, thresholds set to 0")
@@ -61,47 +55,55 @@ def check_configuration_integrity(configurations, paths):
                 return False
 
             if (th < 0):
-                print("error, time parameter set to negative")
+                print("error, time method set to negative")
                 return False
             if (th == 0):
                 print("warning, threshold sets to 0")
 
-    
-    if "HR" in parameter and threshold["base"] > 1440:
-        print("error, a day contains 1440 minutes only")
-        return False
 
-
-    if "HR" in parameter:
-        if len(paths["HR"]) == 0:
+    if "hr_continue" in method:
+        if configurations["hr_continue"] > 1440:
+            print("error, a day contains 1440 minutes only")
+            return False
+        if configurations["waking"]:
+            print("error, option 'waking' is not compatible with HR")
+            return False
+        if len(paths["hr"]) == 0:
             print("HR data files not found")
             return False
-    if "calories" in parameter:
-        if len(paths["Cal"]) == 0:
+    if "calories_continue" in method or "calories_hourly" in method:
+        if len(paths["calories_minutes"]) == 0:
             print("EE data files not found")
-            return
-    if "steps" in parameter:
-        if len(paths["Step"]) == 0:
+            return False
+    if configurations["steps"]:
+        if len(paths["steps_day"]) == 0:
             print("Step data files not found")
-            return
+            # TODO: add the fallback on minute files (with a warning)
+            return False
      
-    # checking configuration for "alignment_check and alignment_arg"
-    if configurations["alignment_check"] == False:
+    # checking configuration for "minute_day and minute_day_param"
+    if not configurations["minute_day"]:
         print("Not checking data alignment")
     else:
-        alignment_arg = configurations["alignment_arg"]
+        alignment_arg = configurations["minute_day_param"]
         if alignment_arg > 1:
-            print("error, 'alignment_arg' should be a float between 0 and 1")
+            print("error, 'minute_day_param' should be a float between 0 and 1")
             return False
         if alignment_arg < 0:
-            print("error, 'alignment_arg' should be a float between 0 and 1")
+            print("error, 'minute_day_param' should be a float between 0 and 1")
             return False
-        if "calories" not in parameter:
+        if "calories_continue" not in method and "calories_hourly" not in method:
             print("warning. data alignment check currently only supported for calories data, 'alignement_arg' set to 1.0")
-            configurations["alignment_arg"] = 1.0
+            configurations["minute_day_param"] = 1.0
             
-        if len(paths["Align"]) != len(paths["Cal"]):
-            print("error the number of dailyCalories and minuteCalories files is different")
+        if len(paths["calories_day"]) != len(paths["calories_minutes"]):
+            print("error the number of dailyCalories and minuteCalories files are different")
+            return False
+        if len(paths["steps_day"]) != len(paths["steps_minutes"]):
+            print("error the number of dailySteps and minuteSteps files are different")
+            return False
+        if len(paths["steps_day"]) != len(paths["calories_day"]):
+            print("error the number of steps and calories files are different")
             return False
     
     return True
@@ -109,12 +111,15 @@ def check_configuration_integrity(configurations, paths):
 
 
 
-def get_files(data_path,debug=False):
+def get_files(data_path,configurations,debug=False):
     # For Fitabase only
-    suffixes = {"fitbitWearTimeViaHR": "HR", "minuteCaloriesNarrow": "Cal", 
-        "minuteStepsNarrow": "Step", "dailySteps": "Step_d", "dailyCalories": "Align", "syncEvents": "Synch"}    
-    # getting paths of interest
-    paths = {"HR": [], "Cal": [], "Step": [], "Step_d": [], "Align": [], "Synch": []}
+    suffixes = {}
+    paths = {}
+    suf = configurations["fitabase_suffixes"]
+    for key in suf:
+        suffixes[suf[key]] = key   
+        # getting paths of interest
+        paths[key] = []
     
     for file in sorted(os.listdir(data_path)):
         if ".csv" in file:
@@ -123,7 +128,7 @@ def get_files(data_path,debug=False):
                     paths[suffixes[key]].append(os.path.join(data_path,file))
             
     #TODO CHECK
-    # if parameter == "steps":
+    # if method == "steps":
     #     if hourly == True and forced_steps_minutes == False :
     #         Step_paths = Step_paths
     #     elif hourly == False and forced_steps_minutes == False :
@@ -136,12 +141,11 @@ def get_files(data_path,debug=False):
     #         hourly = False
     #         Step_paths = Step_paths
     #     else:
-    #         print("problems related to step settings, please check alignement between 'parameter' and 'forced_steps_minutes' ")
+    #         print("problems related to step settings, please check alignement between 'method' and 'forced_steps_minutes' ")
 
     if debug:
-        print("HR paths : ", paths["HR"])
-        print("Cal paths : ", paths["Cal"])
-        print("Step paths : ", paths["Step"])
+        for key in paths:
+            print(f"{key} paths: {paths[key]}")
     
     return paths
 
@@ -156,7 +160,7 @@ def ActiWearCheck(data_path,configurations,debug=False):
     if string, take the files in the indicated path.
 
     configuration: a dict containing the following entries:
-    parameter: 'HR', 'calories', 'steps', 'all'
+    method: 'HR', 'calories', 'steps', 'all'
     if 'HR', take the daily data from fitabase (suffixe=fitbitWearTimeViaHR) and look at the number of minute with HR data 
     if 'steps', take the daily data from fitabase (suffixe=minuteStepsNarrow) and sum the steps over the day.
     if 'calories', take the minute PAEE data from fitabase (suffixe=minuteCaloriesNarrow) and look at the number of active minutes, i.e., over RMR, per day
@@ -168,7 +172,7 @@ def ActiWearCheck(data_path,configurations,debug=False):
     threshold[1], number of minutes per hour to be considered. Between 0 and 60. 
  
     hourly: True, False (default).
-    for parameter = 'calories', parameter = 'steps' , parameter = 'all'
+    for method = 'calories', method = 'steps' , method = 'all'
     if True, take the minute PAEE data from fitabase (suffixe=minuteCaloriesNarrow) and look at the number of active minutes, i.e., over RMR, for a given number of hours per day.
 
     waking: True, False (default).
@@ -179,7 +183,7 @@ def ActiWearCheck(data_path,configurations,debug=False):
     
     alignement_check: True, False (default) 
     test the difference between data from daily files and daily summary resampled from from minute files.
-    Currently only supported for parameter == 'calories' or 'all'.
+    Currently only supported for method == 'calories' or 'all'.
     
     alignement_arg: float, between 0.01-1 (default=0.90), 
     minimum threshold above wich data are considered aligned.
@@ -198,12 +202,12 @@ def ActiWearCheck(data_path,configurations,debug=False):
         data_path = os.getcwd()
         
 
-    files = get_files(data_path,debug=debug)
+    files = get_files(data_path,configurations,debug=debug)
 
     if debug:
         files
 
-    # data_out = {} #???
+    data_out = {} # separate by ID, just in case some subjects are available for some methods but not the other and vice-versa 
 
     if not check_configuration_integrity(configurations, files):
         return
@@ -211,36 +215,106 @@ def ActiWearCheck(data_path,configurations,debug=False):
     if debug:
         print(configurations)
 
-    if "HR" in configurations["parameter"]:
-        all_HR_data = {} # TODO: strange; should be a list, and then concatenate at the end   
-        for file in files["HR"]:
+    if "hr_continue" in configurations["method"]:
+           
+        for file in files["hr"]:
             if debug:
                 print("Analyzing", file)
-            id_ = os.path.basename(file)[1:] # TODO: Ask julien about the first character (0 or 1)
+            id_ = os.path.basename(file)
             id_=id_.split("_")[0]
-            series="TotalMinutesWearTime"
+            series= configurations["fitabase_series"]["hr"]
             data=pd.read_csv(file).set_index("Day")
             data.index = pd.to_datetime(data.index)
             data["ID"] = id_
             data=data[["ID",series]]
-            if configurations["waking"]:    
-                data=data.between_time('5:00','22:59')
-            data['HR-worn'] = data[series] >= configurations["threshold"]["base"]
-            #data["HR-worn"] = data[series].apply(worn_continue)
-            all_HR_data[id_] = data
+            data['HR-worn'] = data[series] >= configurations["hr_continue"]
+            data_out[id_] = [data]
             if debug:
                 print("one file finished")
-        if debug:
-            for indiv in all_HR_data:
-                print(all_HR_data[indiv])
+
+
+    
+    # TODO: alignment should probably be done separately?
+    if "calories_continue" in configurations["method"] or "calories_hourly" in configurations["method"] or configurations["minute_day"]:
+        align_count = 0
+        for file in files["calories_minutes"]:
+            if debug:
+                print(file)
+            id_ = os.path.basename(file)
+            id_=id_.split("_")[0]
+            series=configurations["fitabase_series"]["calories"]
+            data_min=pd.read_csv(file).set_index("ActivityMinute")
+            data_min.index = pd.to_datetime(data_min.index,format="%m/%d/%Y %I:%M:%S %p")
+            data_min['RMR'] = data_min.resample('D')[series].transform('min')
+            data=data_min.resample("D").sum()
+            if configurations["minute_day"]:              
+                data_align_min = data   
+            data["ID"] = id_   
+            data=data[["ID",series]]
+          
+            if "calories_hourly" in configurations["method"]:
+            # Taken from Method 2 (Matt, see below)
+                data_min['minAboveRMR'] = (data_min[series] > data_min['RMR']).astype(int)
+                data_min['hourAboveRMR'] = data_min['minAboveRMR'].resample('h').sum() >= configurations["calories_hourly"][1]
+                if configurations["waking"]:
+                    data['hourAboveRMR'] = data_min.between_time('5:00','22:59')['hourAboveRMR'].resample('D').sum().to_frame()    
+                else:
+                    data['hourAboveRMR'] = data_min['hourAboveRMR'].resample('D').sum().to_frame()    
+                data['Cal-worn (per hour)'] = data['hourAboveRMR'] >= configurations["calories_hourly"][0]  
+            
+            if "calories_continue" in configurations["method"]:
+                if configurations["waking"]:    
+                    data['nMinAboveRMR'] = data_min.between_time('5:00','22:59')[data_min[series] > data_min['RMR']].resample('D').count()[series]
+                else:
+                    data['nMinAboveRMR'] = data_min[data_min[series] > data_min['RMR']].resample('D').count()[series]
+                data['Cal-worn'] = data['nMinAboveRMR'] >= configurations["calories_continue"]
+            
+            if configurations["minute_day"]:
+                data_align_day = pd.read_csv(files["calories_day"][align_count]).set_index("ActivityDay")
+                data_align_day.index = pd.to_datetime(data_align_day.index)
+                data_align = pd.merge(data_align_min, data_align_day, left_index=True, right_index=True)
+                data_align = data_align.rename(columns={series+"_x": series+" resampled (from min files)", series+"_y": series+" from day files"})
+                # Perform the comparison after alignment
+                data_align['diff'] = (data_align[series+" resampled (from min files)"].astype('float') / data_align[series+" from day files"].astype('float')) >= configurations["minute_day_param"]
+                data["day/min alignment"] = data_align['diff']
+                # print(data)
+
+                align_count+=1
+            if "calories_continue" in configurations["method"] or "calories_hourly" in configurations["method"]:
+                if id_ in data_out:
+                    data_out[id_].append(data)
+                else:
+                    data_out[id_] = [data]  
+            if debug:                                          
+                print("one file finished")
+
+    # Finished reading the files
+    if debug:
+        for indiv in data_out:
+            print(data_out[indiv])
+
+    # check that all data are consistent
+    if len(set([len(data_out[_id]) for _id in data_out])) != 1:
+        print("Warning: inconsistent number of data types across individuals")
+
+    id_list = sorted(data_out.keys())
+    frames = []
+    for _id in id_list:
+        f = pd.concat(data_out[_id], axis=1)
+        frames.append(f)
+
+        if configurations["subjectwise_output"]:
+            f.to_csv(configurations["output_basename"]+str(_id)+".csv")
+    return pd.concat(frames)
+
 
 
 
 def read_configurations(config_path):
     with open(config_path, 'r') as yml:
         config = yaml.safe_load(yml)
-    if config["parameter"] == "all" or "all" in config["parameter"]:
-        config["parameter"] = _all_parameters
+    if config["method"] == "all" or "all" in config["method"]:
+        config["method"] = config["all_methods"]
     return config
 
 if __name__ == "__main__":
@@ -252,4 +326,6 @@ if __name__ == "__main__":
 
     configurations = read_configurations(args.configFilename)
     
-    ActiWearCheck(args.dataFilepath,configurations, debug=True)
+    result = ActiWearCheck(args.dataFilepath,configurations, debug=configurations["debug"])
+    if not configurations["subjectwise_output"]:
+        result.to_csv(configurations["output_basename"]+".csv")
