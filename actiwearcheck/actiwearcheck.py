@@ -272,12 +272,30 @@ def ActiWearCheck(data_path,configurations,debug=False):
             if configurations["minute_day"]:
                 data_align_day = pd.read_csv(files["calories_day"][align_count]).set_index("ActivityDay")
                 data_align_day.index = pd.to_datetime(data_align_day.index)
+
+                data_step_min = pd.read_csv(files["steps_minutes"][align_count]).set_index("ActivityMinute")
+                data_step_min.index = pd.to_datetime(data_step_min.index,format="%m/%d/%Y %I:%M:%S %p")
+                data_step_min=data_step_min.resample("D").sum()
+
+                data_step_day = pd.read_csv(files["steps_day"][align_count]).set_index("ActivityDay")
+                data_step_day.index = pd.to_datetime(data_step_day.index)
+
+                
+                
                 data_align = pd.merge(data_align_min, data_align_day, left_index=True, right_index=True)
                 data_align = data_align.rename(columns={series+"_x": series+" resampled (from min files)", series+"_y": series+" from day files"})
+                data_step = pd.merge(data_step_min, data_step_day, left_index=True, right_index=True)
+                if debug:
+                    print("alignment data")
+                    print(pd.concat([data_step,data_align],axis=1))
                 # Perform the comparison after alignment
                 data_align['diff'] = (data_align[series+" resampled (from min files)"].astype('float') / data_align[series+" from day files"].astype('float')) >= configurations["minute_day_param"]
-                data["day/min alignment"] = data_align['diff']
+                data_step['diff'] = (data_step[configurations["fitabase_series"]["steps"]].astype("float") / data_step[configurations["fitabase_series"]["steps_day"]].astype("float")) >= configurations["minute_day_param"]
+                data["day/min calory alignment"] = data_align['diff']
+                data["day/min step alignment"] = data_step["diff"]
                 # print(data)
+
+
 
                 align_count+=1
             if "calories_continue" in configurations["method"] or "calories_hourly" in configurations["method"]:

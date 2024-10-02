@@ -22,3 +22,5 @@ fitabase_suffixes:
 fitabase_series:
   hr: "TotalMinutesWearTime"
   calories: "Calories"
+  steps: "Steps"
+  steps_day: "StepTotal"
