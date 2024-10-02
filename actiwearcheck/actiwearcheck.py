@@ -93,8 +93,7 @@ def check_configuration_integrity(configurations, paths):
             print("error, 'minute_day_param' should be a float between 0 and 1")
             return False
         if "calories_continue" not in method and "calories_hourly" not in method:
-            print("warning. data alignment check currently only supported for calories data, 'alignement_arg' set to 1.0")
-            configurations["minute_day_param"] = 1.0
+            print("WARNING: data alignment check currently only supported for calories data, calory and step files will be used.")
             
         if len(paths["calories_day"]) != len(paths["calories_minutes"]):
             print("error the number of dailyCalories and minuteCalories files are different")
@@ -234,7 +233,7 @@ def ActiWearCheck(data_path,configurations,debug=False):
 
 
     
-    # TODO: alignment should probably be done separately?
+    # QUESTION: alignment should probably be done separately?
     if "calories_continue" in configurations["method"] or "calories_hourly" in configurations["method"] or configurations["minute_day"]:
         align_count = 0
         for file in files["calories_minutes"]:
@@ -298,13 +297,39 @@ def ActiWearCheck(data_path,configurations,debug=False):
 
 
                 align_count+=1
-            if "calories_continue" in configurations["method"] or "calories_hourly" in configurations["method"]:
+            if "calories_continue" not in configurations["method"] and "calories_hourly" not in configurations["method"]:
+                data.drop(columns=[series], inplace=True) # We are only here for alignment
+                
+            if id_ in data_out:
+                data.drop(columns=["ID"], inplace=True) # We already know it
+                data_out[id_].append(data)
+            else:
+                data_out[id_] = [data]  
+            if debug:                                          
+                print("one file finished")
+
+        if configurations["steps"]:
+            for file in files["steps_day"]:
+                if debug:
+                    print(file)
+                data = pd.read_csv(file).set_index("ActivityDay")
+                data.index = pd.to_datetime(data.index)
+
+                id_ = os.path.basename(file)
+                id_=id_.split("_")[0]
+                series=configurations["fitabase_series"]["steps_day"]
+                data["ID"] = id_   
+                data["Stepped"] = data[series] >= configurations["steps_param"]
+                if debug:
+                    print(data)
                 if id_ in data_out:
+                    data.drop(columns=["ID"], inplace=True) # We already know it
                     data_out[id_].append(data)
                 else:
                     data_out[id_] = [data]  
-            if debug:                                          
-                print("one file finished")
+                if debug:                                          
+                    print("one file finished")
+
 
     # Finished reading the files
     if debug:
@@ -314,11 +339,14 @@ def ActiWearCheck(data_path,configurations,debug=False):
     # check that all data are consistent
     if len(set([len(data_out[_id]) for _id in data_out])) != 1:
         print("Warning: inconsistent number of data types across individuals")
+        print([(_id, len(data_out[_id])) for _id in data_out])
 
     id_list = sorted(data_out.keys())
     frames = []
     for _id in id_list:
         f = pd.concat(data_out[_id], axis=1)
+        if configurations["drop_na"]:
+            f.dropna(inplace=True)
         frames.append(f)
 
         if configurations["subjectwise_output"]:
