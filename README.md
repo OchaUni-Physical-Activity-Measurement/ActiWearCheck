@@ -1,4 +1,12 @@
 # ActiWearCheck (Fitbit valid wear estimation software)   
+```python3 actiwearcheck.py [-d path_to_data] [-c path_to_config]```
+
+path_to_data: path to the fitbit data folder, e.g. ./ActiWearCheck/samples/pub-edit-version. If not provided, defaults to the current directory
+
+path_to_config: path to the configuration file for the analysis, provided in the yaml format. If not provided, defaults to conf/default_conf.yaml. See that file for an exaustive list of options.
+
+
+==== TODO: refactor the following
 **Input: PA and HR data from  Fitbit (.csv per subject in ~/samples)**  
 **Output: filters for each day (.csv per subject in ~/results)**  
 **Script: ActiWearCheck.ipynb**  
