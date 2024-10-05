@@ -1,7 +1,3 @@
-debug: False
-waking: False
-subjectwise_output: True # if True, one file per subject
-output_basename: "actiwear" # can also be an absolute path, without file extension
 all_methods: ["hr_continue", "calories_continue", "calories_hourly"] # List of all available methods
 method: "hr_continue" # can be one string, a list of available methods, or "all"
 hr_continue: 600
@@ -12,6 +8,7 @@ steps_param: 1
 minute_day: True
 minute_day_param: 0.9
 synch_check: False # TODO
+waking: False
 fitabase_suffixes:
   hr: "fitbitWearTimeViaHR"
   calories_minutes: "minuteCaloriesNarrow"
@@ -25,3 +22,6 @@ fitabase_series:
   steps: "Steps"
   steps_day: "StepTotal"
 drop_na: True
+subjectwise_output: True # if True, one file per subject
+output_basename: "actiwear" # can also be an absolute path, without file extension
+debug: False

@@ -159,43 +159,62 @@ def ActiWearCheck(data_path,configurations,debug=False):
     if None, take the files in the current directory.
     if string, take the files in the indicated path.
 
-    configuration: a dict containing the following entries:
-    method: 'HR', 'calories', 'steps', 'all'
-    if 'HR', take the daily data from fitabase (suffixe=fitbitWearTimeViaHR) and look at the number of minute with HR data 
-    if 'steps', take the daily data from fitabase (suffixe=minuteStepsNarrow) and sum the steps over the day.
-    if 'calories', take the minute PAEE data from fitabase (suffixe=minuteCaloriesNarrow) and look at the number of active minutes, i.e., over RMR, per day
- 
-    threshold: int.
-    number of required minute per day to count the day as worn. Between 0 and 1440. 
-    for hourly == True
-    threshold[0], number of hours per day to be considered. Between 0 and 24.
-    threshold[1], number of minutes per hour to be considered. Between 0 and 60. 
- 
-    hourly: True, False (default).
-    for method = 'calories', method = 'steps' , method = 'all'
-    if True, take the minute PAEE data from fitabase (suffixe=minuteCaloriesNarrow) and look at the number of active minutes, i.e., over RMR, for a given number of hours per day.
+    configuration:
+    a dict containing the following entries:
+    
+        method: 'hr_continue' (default), 'calories_continue', 'calories_hourly','all'
+        evaluate valid wear days,
+        if 'hr_continue', from the number of minutes with HR data found in daily data files.
+        if 'calories_continue', from the number of minutes with EE above REE. Minute data files are used.
+        if 'calories_hourly', from the number of hours with a least a selected number of minutes with EE above REE minute. Minute data files are used.
+        
 
-    waking: True, False (default).
-    if True, only considered hours between 5:00-22:59.
-    
-    forced_steps_minutes: True, False (default)
-    if True, resample the minute files to compute daily steps. Prone to errors when hourly=False.
-    
-    alignement_check: True, False (default) 
-    test the difference between data from daily files and daily summary resampled from from minute files.
-    Currently only supported for method == 'calories' or 'all'.
-    
-    alignement_arg: float, between 0.01-1 (default=0.90), 
-    minimum threshold above wich data are considered aligned.
-    the default 0.90, considered acceptable a 10% difference (or less) between data from daily files and daily summary resampled from from minute files.
+        hr_continue: int between 0 and 1440. (default = 600)
+        number of minutes to be used as evaluation criteria for the 'hr_continue' method.
 
-    synch_check: True, False (default),
-    test whether interval between synch was bigger than minute data memory capacity.
+        calories_continue: int between 0 and 1440. (default = 600)
+        number of minutes to be used as evaluation criteria for the 'calories_continue' method.
+
+        calories_hourly: [int between 1 and 24, int between 1 and 60] (default = [10, 1])
+        number of hours and minute-per-hour to be used as evaluation criteria for the 'calories_hourly' method.
+
+        steps: boolean (default = True)
+        An option to evaluate valid wear based on the daily number of steps.
+
+        steps_param: int equal or higher than 0 (default = 1)
+        number of steps to be used as evaluation criteria when steps = True.
+
+        minute_day: boolean (default = True)
+        An option to evaluate valid wear based on the ratio of minute data (steps and calories) resampled to day and daily data obtained from daily summarize files.
+
+        minute day_param: float between 0.0 and 1.0 (default = 0.9)
+        ratio to be used as evaluation criteria when  = True.
+        
+        synch_check: boolean (default = False)
+        An option to evaluate the validity of data based on the interval between two device synchronization dates.
+        not supported by this version.
+
+        waking: boolean (default = False)
+        if True, conduct the valid wear evaluation between 5:00 and 22:59 only.
+        cannot currenlty be used for method = 'hr_continue'
+
+        fitabase_suffixes:
+        string to be found in fitabase file names for hr, minute calories, daily calories, minutes steps, daily steps and synch data.
     
-    synch_arg: a list of lists as follows,
-    [['device name' (string), number of day before data lost (int)]].
-    set to the default values 5.
+        fitabase_series:
+        name of time series of interest for hr, calories, minute steps and daily steps data.
     
+        drop_na: boolean (default = True)
+        if True, remove days with no data.
+
+        subjectwise_output: boolean (default = True)
+        if True, results are saved in one file per subject.
+
+        output_basename: string (default = 'actiwear')
+        name of the output csv file.
+
+        debug: boolean (default = False)
+
     """
 
     if data_path is None:
