@@ -7,6 +7,7 @@
 import os
 import yaml
 import pandas as pd
+import time
 
 ######################
 # SETUP
@@ -364,6 +365,8 @@ def read_configurations(config_path):
     return config
 
 if __name__ == "__main__":
+    start_time = time.time()
+
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--dataFilepath', type=str, default=None, help = "Path to data files")
@@ -373,5 +376,11 @@ if __name__ == "__main__":
     configurations = read_configurations(args.configFilename)
     
     result = ActiWearCheck(args.dataFilepath,configurations, debug=configurations["debug"])
+
     if not configurations["subjectwise_output"]:
         result.to_csv(configurations["output_basename"]+".csv")
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+
+    print(f"ActiveWearCheck finished in {elapsed_time:.2f} seconds.")
