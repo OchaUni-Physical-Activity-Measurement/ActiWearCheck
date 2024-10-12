@@ -22,6 +22,7 @@ def check_configuration_integrity(configurations, paths):
     paths: dictionary of path lists. Each list corresponds to a type of file, described by one of the keys
     such as "HR", "Cal", "Step", "Step_d", "Align", and "Synch"
     """
+    print("Checking correct function call and configuration file...")
     #TODO: auto generate the key list?
 
     method = configurations["method"]
@@ -76,6 +77,9 @@ def check_configuration_integrity(configurations, paths):
         if len(paths["calories_minutes"]) == 0:
             print("EE data files not found")
             return False
+        if configurations["calories_continue"] > 1440:
+            print("error, a day contains 1440 minutes only")
+            return False
     if configurations["steps"]:
         if len(paths["steps_day"]) == 0:
             print("Step data files not found")
@@ -112,6 +116,16 @@ def check_configuration_integrity(configurations, paths):
 
 
 def get_files(data_path,configurations,debug=False):
+    """
+    Imports file, as extracted from Fitabase.
+    Arguments:
+    - data_path: where data are located
+    - condigurations: the configuration.yaml file to apply
+
+    Returns:
+    - paths = dictionary of data
+    """
+    print("Importing data...")
     # For Fitabase only
     suffixes = {}
     paths = {}
@@ -216,6 +230,7 @@ def ActiWearCheck(data_path,configurations,debug=False):
         debug: boolean (default = False)
 
     """
+    print("Computing ActiWearCheck...")
 
     if data_path is None:
         data_path = os.getcwd()
@@ -361,6 +376,7 @@ def ActiWearCheck(data_path,configurations,debug=False):
         print("Warning: inconsistent number of data types across individuals")
         print([(_id, len(data_out[_id])) for _id in data_out])
 
+    print("Saving data...")
     id_list = sorted(data_out.keys())
     frames = []
     for _id in id_list:
@@ -377,6 +393,10 @@ def ActiWearCheck(data_path,configurations,debug=False):
 
 
 def read_configurations(config_path):
+    """
+    (...)
+    """
+    print("Reading configuration file...")
     with open(config_path, 'r') as yml:
         config = yaml.safe_load(yml)
     if config["method"] == "all" or "all" in config["method"]:
@@ -390,6 +410,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--dataFilepath', type=str, default=None, help = "Path to data files")
     parser.add_argument('-c', '--configFilename', type=str, default='conf/default_conf.yaml', help = "Path to configuration file")
+    # parser.add_argument("-o", "--output", type=str, default=None, help="Directory to save results (default: './results')")
     args = parser.parse_args()
 
     configurations = read_configurations(args.configFilename)
