@@ -298,7 +298,7 @@ def ActiWearCheck(data_path,configurations,debug=False):
                     data['hourAboveRMR'] = data_min.between_time('5:00','22:59')['hourAboveRMR'].resample('D').sum().to_frame()    
                 else:
                     data['hourAboveRMR'] = data_min['hourAboveRMR'].resample('D').sum().to_frame()    
-                data['Cal-worn (per hour)'] = data['hourAboveRMR'] >= configurations["calories_hourly"][0]  
+                data['Cal-worn(per-hour)'] = data['hourAboveRMR'] >= configurations["calories_hourly"][0]  
             
             if "calories_continue" in configurations["method"]:
                 if configurations["waking"]:    
@@ -329,8 +329,8 @@ def ActiWearCheck(data_path,configurations,debug=False):
                 # Perform the comparison after alignment
                 data_align['diff'] = (data_align[series+" resampled (from min files)"].astype('float') / data_align[series+" from day files"].astype('float')) >= configurations["minute_day_param"]
                 data_step['diff'] = (data_step[configurations["fitabase_series"]["steps"]].astype("float") / data_step[configurations["fitabase_series"]["steps_day"]].astype("float")) >= configurations["minute_day_param"]
-                data["day/min calory alignment"] = data_align['diff']
-                data["day/min step alignment"] = data_step["diff"]
+                data["day/min_calory_alignment"] = data_align['diff']
+                data["day/min_step_alignment"] = data_step["diff"]
                 # print(data)
 
 

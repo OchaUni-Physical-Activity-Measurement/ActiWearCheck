@@ -1,0 +1,10 @@
+device:
+  alta:
+    hr: False
+    memory: 5
+  alta hr:
+    hr: True
+    memory: 7
+  inspire 2:
+    hr: True
+    memory: 7
