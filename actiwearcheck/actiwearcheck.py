@@ -426,12 +426,13 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--dataFilepath', type=str, default=None, help = "Path to data files")
+    parser.add_argument('-o', '--outputpath', type=str, default="./", help = "Path to output")
     parser.add_argument('-c', '--configFilename', type=str, default='conf/default_conf.yaml', help = "Path to configuration file")
     # parser.add_argument("-o", "--output", type=str, default=None, help="Directory to save results (default: './results')")
     args = parser.parse_args()
 
     configurations = read_configurations(args.configFilename)
-    
+    configurations["output_basename"] = os.path.join(args.outputpath, configurations["output_basename"])
     result = ActiWearCheck(args.dataFilepath,configurations, debug=configurations["debug"])
 
     if not configurations["subjectwise_output"]:
