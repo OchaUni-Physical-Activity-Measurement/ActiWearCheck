@@ -262,7 +262,11 @@ def ActiWearCheck(data_path,configurations,debug=False):
             data["ID"] = id_
             data=data[["ID",series]]
             data['HR-worn'] = data[series] >= configurations["hr_continue"]
-            data_out[id_] = [data]
+            if id_ in data_out:
+                data.drop(columns=["ID"], inplace=True) # We already know it
+                data_out[id_].append(data)
+            else:
+                data_out[id_] = [data]
             if debug:
                 print("one file finished")
 
@@ -365,6 +369,17 @@ def ActiWearCheck(data_path,configurations,debug=False):
                 if debug:                                          
                     print("one file finished")
 
+    # get device name if available
+    device_names = {}
+    for file in files["synch"]:
+        if debug:
+            print("Analyzing", file)
+        id_ = os.path.basename(file)
+        id_=id_.split("_")[0]
+        device_name= configurations["fitabase_series"]["device_name"]
+        data=pd.read_csv(file)[device_name][0]
+        device_names[id_] = data
+
 
     # Finished reading the files
     if debug:
@@ -381,6 +396,8 @@ def ActiWearCheck(data_path,configurations,debug=False):
     frames = []
     for _id in id_list:
         f = pd.concat(data_out[_id], axis=1)
+        if _id in device_names:
+            f[configurations["fitabase_series"]["device_name"]] = device_names[_id]
         if configurations["drop_na"]:
             f.dropna(inplace=True)
         frames.append(f)

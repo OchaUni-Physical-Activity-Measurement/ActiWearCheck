@@ -21,6 +21,7 @@ fitabase_series:
   calories: "Calories"
   steps: "Steps"
   steps_day: "StepTotal"
+  device_name: "DeviceName"
 drop_na: True
 subjectwise_output: True # if True, one file per subject
 output_basename: "actiwear" # can also be an absolute path, without file extension
