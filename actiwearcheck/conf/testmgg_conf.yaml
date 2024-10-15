@@ -1,12 +1,12 @@
 debug: False
 waking: False
-subjectwise_output: False # if True, one file per subject
-output_basename: "actiwear" # can also be an absolute path, without file extension
+subjectwise_output: False       # if True, one file per subject
+output_basename: "actiwear"     # can also be an absolute path, without file extension
 all_methods: ["hr_continue", "calories_continue", "calories_hourly"] # List of all available methods
-method: "all" # can be one string, a list of available methods, or "all"
+method: "all"                   # can be one string, a list of available methods, or "all"
 hr_continue: 600                # number of minutes considered worn by the heart-rate lense
 calories_continue: 600          # number of minutes active during the day
-calories_hourly: [24, 60]       # number of hours containing a number of active minutes during the day
+calories_hourly: [1, 1]         # number of hours containing a number of active minutes during the day
 steps: True                     # set to True if you want to check for a minimum of steps during the day
 steps_param: 1                  # amount of steps during the day to be considered valid
 minute_day: True
@@ -24,4 +24,5 @@ fitabase_series:
   calories: "Calories"
   steps: "Steps"
   steps_day: "StepTotal"
+  device_name: "DeviceName"
 drop_na: True
