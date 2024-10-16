@@ -163,7 +163,43 @@ def get_files(data_path,configurations,debug=False):
     
     return paths
 
-
+def synch_check(files, configurations, default_max_days=5, debug=False):
+    all_Synch_data = {}
+    
+    print("Starting sync check")
+    for file in files["synch"]:
+        if debug:
+            print(file)
+        id_ = os.path.basename(file)
+        id_=id_.split("_")[0]
+        series=configurations["fitabase_series"]["synch"]
+        synch_data = pd.read_csv(file).set_index("DateTime")
+        synch_data.index = pd.to_datetime(synch_data.index,format="%m/%d/%Y %I:%M:%S %p")
+        synch_data[series] = pd.to_datetime(synch_data[series],format="%m/%d/%Y %I:%M:%S %p")
+        device_name = synch_data[configurations["fitabase_series"]["device_name"]].to_numpy()[0].lower()
+        # Sort by time
+        synch_data = synch_data.sort_values(by=series)
+        # Calculate differences between consecutive sync times
+        synch_data['time_diff'] = synch_data[series].diff().dt.days
+        synch_data['time_diff'] = synch_data['time_diff'].fillna(0) # Change Nan for 0 so that idxmax can be processed
+        # Group data daywise and return the line where the time difference is maximum
+        synch_data = synch_data.groupby(synch_data.index.date).apply(lambda x: x.loc[x['time_diff'].idxmax()])
+        # Reset the index to be a datetime
+        synch_data.index = pd.to_datetime(synch_data.index)                     
+        # Check if the time difference exceeds max_days
+        if device_name in configurations["devices"]:
+            max_days = float(configurations["devices"][device_name]["memory"])
+        else:
+            max_days = default_max_days
+            print(f"WARNING: unknown device {device_name}, defaulting to {max_days} days")
+            print(configurations["devices"])
+        # Compute the data_loss_risk in a vectorized manner
+        synch_data['data_loss_risk'] = synch_data['time_diff'] > max_days
+        #synch_data['data_loss_risk'] = synch_data['time_diff'] > 5 
+        all_Synch_data[id_] = synch_data       
+    
+    print("Synch check done")
+    return all_Synch_data
 ####################
 # MAIN CHECK
 ####################
@@ -230,7 +266,7 @@ def ActiWearCheck(data_path,configurations,debug=False):
         debug: boolean (default = False)
 
     """
-    print("Computing ActiWearCheck...")
+    print("Starting ActiWearCheck...")
 
     if data_path is None:
         data_path = os.getcwd()
@@ -369,11 +405,19 @@ def ActiWearCheck(data_path,configurations,debug=False):
                 if debug:                                          
                     print("one file finished")
 
+    if configurations["synch_check"]:
+        synchs = synch_check(files, configurations)
+        for _id in synchs:
+            if _id in data_out:
+                data_out[_id].append(synchs[_id])
+            else:
+                data_out[_id] = [synchs[_id]]
+
     # get device name if available
     device_names = {}
     for file in files["synch"]:
         if debug:
-            print("Analyzing", file)
+            print("Reading device name from", file)
         id_ = os.path.basename(file)
         id_=id_.split("_")[0]
         device_name= configurations["fitabase_series"]["device_name"]
@@ -404,10 +448,8 @@ def ActiWearCheck(data_path,configurations,debug=False):
 
         if configurations["subjectwise_output"]:
             f.to_csv(configurations["output_basename"]+str(_id)+".csv")
+    print("...Done")
     return pd.concat(frames)
-
-
-
 
 def read_configurations(config_path):
     """
@@ -416,7 +458,7 @@ def read_configurations(config_path):
     print("Reading configuration file...")
     with open(config_path, 'r') as yml:
         config = yaml.safe_load(yml)
-    if config["method"] == "all" or "all" in config["method"]:
+    if "method" in config and (config["method"] == "all" or "all" in config["method"]):
         config["method"] = config["all_methods"]
     return config
 
@@ -426,13 +468,15 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--dataFilepath', type=str, default=None, help = "Path to data files")
-    parser.add_argument('-o', '--outputpath', type=str, default="./", help = "Path to output")
+    parser.add_argument('-o', '--outputpath', type=str, default="./", help = "Output directory")
     parser.add_argument('-c', '--configFilename', type=str, default='conf/default_conf.yaml', help = "Path to configuration file")
-    # parser.add_argument("-o", "--output", type=str, default=None, help="Directory to save results (default: './results')")
+    parser.add_argument('--devicesFilename', type=str, default='devices/20241015_devices.yaml', help = "Path to devices definitions")
     args = parser.parse_args()
 
     configurations = read_configurations(args.configFilename)
+    devices = read_configurations(args.devicesFilename)
     configurations["output_basename"] = os.path.join(args.outputpath, configurations["output_basename"])
+    configurations["devices"] = devices
     result = ActiWearCheck(args.dataFilepath,configurations, debug=configurations["debug"])
 
     if not configurations["subjectwise_output"]:

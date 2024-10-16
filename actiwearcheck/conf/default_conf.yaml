@@ -7,7 +7,7 @@ steps: True
 steps_param: 1
 minute_day: True
 minute_day_param: 0.9
-synch_check: False # TODO
+synch_check: True
 waking: False
 fitabase_suffixes:
   hr: "fitbitWearTimeViaHR"
@@ -22,6 +22,7 @@ fitabase_series:
   steps: "Steps"
   steps_day: "StepTotal"
   device_name: "DeviceName"
+  synch: "SyncDateUTC"
 drop_na: True
 subjectwise_output: True # if True, one file per subject
 output_basename: "actiwear" # can also be an absolute path, without file extension
