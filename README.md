@@ -1,39 +1,83 @@
-# ActiWearCheck (Fitbit valid wear estimation software)   
+## ActiWearCheck
+
+<strong>Evaluate days of valid wear for Fitbit activity tracker</strong>.
+
+This repository contains:
+- a software (<a href="tree/main/actiwearcheck"><strong>actiwearcheck.py</strong></a>) to process HR or accelerometer minute data obtained from Fitbit devices and evaluate days of valid wear.
+- sample data for 6 subjects.
+
+### run actiwearcheck
+
 ```python3 actiwearcheck.py [-d path_to_data] [-c path_to_config]```
 
-path_to_data: path to the fitbit data folder, e.g. ./ActiWearCheck/samples/. If not provided, defaults to the current directory.
+<strong>path_to_data</strong>: path to the fitbit data folder, e.g. <a href="https://github.com/OchaUni-Physical-Activity-Measurement/ActiWearCheck/tree/main/samples">.ActiWearCheck/samples/</a>. If not provided, defaults to the current directory.<br>
+<strong>path_to_config</strong>: path to the configuration file for the analysis, provided in the yaml format. If not provided, defaults to <a href="https://github.com/OchaUni-Physical-Activity-Measurement/ActiWearCheck/blob/main/actiwearcheck/conf/default_conf.yaml">conf/default_conf.yaml</a>. See that file for an exaustive list of options. <strong>The default configuration works with Fitabase export files</strong>.
 
-path_to_config: path to the configuration file for the analysis, provided in the yaml format. If not provided, defaults to conf/default_conf.yaml. See that file for an exaustive list of options.
+### methods of evaluation
 
+The current configuration file accepts 3 different methods for evaluation of valid wear. the criteria are as follows:
+- <strong>"hr_continue"</strong>: a minimum number of minutes with heart rate data is required. The suggested default configuration is looking for days with at least 600 minutes of hear rate data.
+- <strong>"calories_continue"</strong>: a minimum number of minutes with energy expenditure data above the resting metabolic rest is required. The suggested default configuration is looking for days with at least 600 minutes above the resting metabolic rate.
+- <strong>"calories_hourly"</strong>: a minimum of hours containing at least a given number of minutes with energy expenditure above the resting metabolic rate. The suggested default configuration is looking for days with at least 10 hours that contain at least 1 minute above the resting metabolic rate.
 
-==== TODO: refactor the following
-**Input: PA and HR data from  Fitbit (.csv per subject in ~/samples)**  
-**Output: filters for each day (.csv per subject in ~/results)**  
-**Script: ActiWearCheck.ipynb**  
+### main options
 
-Three different methods to estimate days with valid wear from Fitbit minute data.
-Please consult the [log] at the beggining of the notebook to get information about the features and progress.  
+- <strong>"steps"</strong>: a minimum number of steps ("steps_param") is required to consider a day as valid.
+- <strong>"minute_day"</strong>: the ratio of minute data (steps and calories) resampled to day and daily data obtained from daily summarize files should be over a given decimal between 0 and 1 ("minute_day_param") to consider a day as valid.
+- <strong>"waking"</strong>: only minutes between 5:00 and 22:59 are considered for the evaluation.
+- <strong>"synch_check"</strong>: evaluate the validity of data based on the interval between two synchronization dates. Interval criteria, which depend on device specifications, can be found in <a ref="https://github.com/OchaUni-Physical-Activity-Measurement/ActiWearCheck/blob/main/actiwearcheck/devices/20241015_devices.yaml">./ActiWearCheck/actiwearcheck/devices/20241015_devices.yaml</a>.
 
-**Warning: the name of columns, file names, key and path may change over software's versions**
+#### full documentation (help)
+```
+method: 'hr_continue' (default), 'calories_continue', 'calories_hourly','all'
+evaluate valid wear days,
+if 'hr_continue', from the number of minutes with HR data found in daily data files.
+if 'calories_continue', from the number of minutes with EE above REE. Minute data files are used.
+if 'calories_hourly', from the number of hours with a least a selected number of minutes with EE above REE minute. Minute data files are used.
 
-*Step by step description:*
-- gather all the physical activity data from fitbit trackers as .csv files in the same folder (see exemples of file structure in ["~/samples"](https://github.com/OchaUni-Physical-Activity-Measurement/ActiWearCheck/tree/main/samples) for examples)
-- apply the script provided ([**ActiWearCheck.ipynb**](https://github.com/OchaUni-Physical-Activity-Measurement/ActiWearCheck/blob/main/ActiWearCheck.ipynb)), which:
-    - imports all the .csv files as dataframes in Python.
-    - applies different filters for each days:
-        - removes days with a =<1 step record, which indicates that the device was not worn during the 24-hour period or that the battery was discharged.
-        - removes days with a discrepancy b >=10% between the daily EE estimates provided by the original Fitbit application and the EE estimates computed by resampling the minute-per-minute EE data, which indicates that the minute-per-minute data record was corrupted possibly due to memory or sync issues.
-    - calculates, for each day, the minute with the minimum calories value. This defines the resting metabolic rate (RMR).
-    - defines each minute in each day as above or beyound RMR.
-    - application of different methods:
-        - Method 1 = days with valid wear required a minimum of c = 600 minutes above the estimated RMR.
-        - Method 2 = days with valid wear required a minimum of d = 10 hours containing at least e = 1 minute above the RMR.
-        - Method 3 = days with valid wear required a minimum of f = X steps *(not used in the manuscript presenting the software)*.
-        - Method HR = days with valid wear required a minimum of g = 600 minutes with HR data.
-    - you can also restrain the of-interest period during the day (ex: from 5am to 11pm) applying h = waking hours *(not used in the manuscript presenting the software)*.
-     - you obtain one .csv file per individual, whith Steps and Calories PA data and several filters bool columns for each day (see exemples of files structure in  ["~/results"](https://github.com/OchaUni-Physical-Activity-Measurement/ActiWearCheck/tree/main/results))
+hr_continue: int between 0 and 1440. (default = 600)
+number of minutes to be used as evaluation criteria for the 'hr_continue' method.
 
-Note: a, b, c ,d, e, f,g and h values can me modified in the script.  
+calories_continue: int between 0 and 1440. (default = 600)
+number of minutes to be used as evaluation criteria for the 'calories_continue' method.
 
-___
-We provide the analysis code, data and results for the application of this software on data obtained during the [drePAnon clinical trial (UMIN000042826)](https://center6.umin.ac.jp/cgi-open-bin/ctr_e/ctr_view.cgi?recptno=R000048880) research project in the ["~/analysis" folder](https://github.com/OchaUni-Physical-Activity-Measurement/ActiWearCheck/tree/main/analysis).
+calories_hourly: [int between 1 and 24, int between 1 and 60] (default = [10, 1])
+number of hours and minute-per-hour to be used as evaluation criteria for the 'calories_hourly' method.
+
+steps: boolean (default = True)
+an option to evaluate valid wear based on the daily number of steps.
+
+steps_param: int equal or higher than 0 (default = 1)
+number of steps to be used as evaluation criteria when steps = True.
+
+minute_day: boolean (default = True)
+An option to evaluate valid wear based on the ratio of minute data (steps and calories) resampled to day and daily data obtained from daily summarize files.
+
+minute day_param: float between 0.0 and 1.0 (default = 0.9)
+ratio to be used as evaluation criteria when  = True.
+
+synch_check: boolean (default = False)
+an option to evaluate the validity of data based on the interval between two synchronization dates.
+the interval criteria depends on the device specifications (alta, alta hr and inspire 2 are currently supported for this option).
+
+waking: boolean (default = False)
+if True, conduct the valid wear evaluation between 5:00 and 22:59 only.
+cannot currenlty be used for method = 'hr_continue'
+
+fitabase_suffixes:
+string to be found in fitabase file names for hr, minute calories, daily calories, minutes steps, daily steps and synch data.
+
+fitabase_series:
+name of time series of interest for hr, calories, minute steps and daily steps data.
+
+drop_na: boolean (default = True)
+if True, remove days with no data.
+
+subjectwise_output: boolean (default = True)
+if True, results are saved in one file per subject.
+
+output_basename: string (default = 'actiwear')
+name of the output csv file.
+
+debug: boolean (default = False)
+```
