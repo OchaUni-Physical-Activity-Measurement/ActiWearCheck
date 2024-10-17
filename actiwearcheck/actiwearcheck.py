@@ -235,14 +235,14 @@ def ActiWearCheck(data_path,configurations,debug=False):
         number of steps to be used as evaluation criteria when steps = True.
 
         minute_day: boolean (default = True)
-        An option to evaluate valid wear based on the ratio of minute data (steps and calories) resampled to day and daily data obtained from daily summarize files.
+        an option to evaluate valid wear based on the ratio of minute data (steps and calories) resampled to day and daily data obtained from daily summarize files.
 
         minute day_param: float between 0.0 and 1.0 (default = 0.9)
         ratio to be used as evaluation criteria when  = True.
         
         synch_check: boolean (default = False)
-        An option to evaluate the validity of data based on the interval between two device synchronization dates.
-        not supported by this version.
+        an option to evaluate the validity of data based on the interval between two device synchronization dates.
+        the interval criteria depends on the device specifications (alta, alta hr and inspire 2 devices are currently supported).
 
         waking: boolean (default = False)
         if True, conduct the valid wear evaluation between 5:00 and 22:59 only.
