@@ -3,7 +3,7 @@
 <strong>Evaluate days of valid wear for Fitbit activity tracker</strong>.
 
 This repository contains:
-- a software (<a href="tree/main/actiwearcheck"><strong>actiwearcheck.py</strong></a>) to process HR or accelerometer minute data obtained from Fitbit devices and evaluate days of valid wear.
+- a software (<a href="tree/main/actiwearcheck"><strong>actiwearcheck/actiwearcheck.py</strong></a>) to process HR or accelerometer minute data obtained from Fitbit devices and evaluate days of valid wear.
 - sample data for 6 subjects.
 
 ### run actiwearcheck
