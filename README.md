@@ -58,7 +58,7 @@ ratio to be used as evaluation criteria when  = True.
 
 synch_check: boolean (default = False)
 an option to evaluate the validity of data based on the interval between two synchronization dates.
-the interval criteria depends on the device specifications (alta, alta hr and inspire 2 are currently supported for this option).
+the interval criteria depends on the device specifications (currently supported for the following devices: alta, alta hr and inspire 2).
 
 waking: boolean (default = False)
 if True, conduct the valid wear evaluation between 5:00 and 22:59 only.
