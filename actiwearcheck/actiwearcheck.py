@@ -71,24 +71,24 @@ def check_configuration_integrity(configurations, paths):
             print("error, option 'waking' is not compatible with HR")
             return False
         if len(paths["hr"]) == 0:
-            print("HR data files not found")
+            print("error, HR data files not found")
             return False
     if "calories_continue" in method or "calories_hourly" in method:
         if len(paths["calories_minutes"]) == 0:
-            print("EE data files not found")
+            print("error, EE data files not found")
             return False
         if configurations["calories_continue"] > 1440:
             print("error, a day contains 1440 minutes only")
             return False
     if configurations["steps"]:
         if len(paths["steps_day"]) == 0:
-            print("Step data files not found")
+            print("error, step data files not found")
             # TODO: add the fallback on minute files (with a warning)
             return False
      
     # checking configuration for "minute_day and minute_day_param"
     if not configurations["minute_day"]:
-        print("Not checking data alignment")
+        print("warining, not checking data alignment")
     else:
         alignment_arg = configurations["minute_day_param"]
         if alignment_arg > 1:
@@ -98,16 +98,16 @@ def check_configuration_integrity(configurations, paths):
             print("error, 'minute_day_param' should be a float between 0 and 1")
             return False
         if "calories_continue" not in method and "calories_hourly" not in method:
-            print("WARNING: data alignment check currently only supported for calories data, calory and step files will be used.")
+            print("warning, data alignment check currently only supported for calories data, calory and step files will be used.")
             
         if len(paths["calories_day"]) != len(paths["calories_minutes"]):
-            print("error the number of dailyCalories and minuteCalories files are different")
+            print("error, the number of dailyCalories and minuteCalories files are different")
             return False
         if len(paths["steps_day"]) != len(paths["steps_minutes"]):
-            print("error the number of dailySteps and minuteSteps files are different")
+            print("error, the number of dailySteps and minuteSteps files are different")
             return False
         if len(paths["steps_day"]) != len(paths["calories_day"]):
-            print("error the number of steps and calories files are different")
+            print("error, the number of steps and calories files are different")
             return False
     
     return True
@@ -166,7 +166,7 @@ def get_files(data_path,configurations,debug=False):
 def synch_check(files, configurations, default_max_days=5, debug=False):
     all_Synch_data = {}
     
-    print("Starting sync check")
+    print("Starting synchronisation check...")
     for file in files["synch"]:
         if debug:
             print(file)
@@ -191,15 +191,15 @@ def synch_check(files, configurations, default_max_days=5, debug=False):
             max_days = float(configurations["devices"][device_name]["memory"])
         else:
             max_days = default_max_days
-            print(f"WARNING: unknown device {device_name}, defaulting to {max_days} days")
+            print(f"warning, unknown device {device_name}, defaulting to {max_days} days")
             print(configurations["devices"])
         # Compute the data_loss_risk in a vectorized manner
         synch_data['data_loss_risk'] = synch_data['time_diff'] > max_days
         #synch_data['data_loss_risk'] = synch_data['time_diff'] > 5 
         all_Synch_data[id_] = synch_data       
     
-    print("Synch check done")
     return all_Synch_data
+
 ####################
 # MAIN CHECK
 ####################
@@ -214,10 +214,9 @@ def ActiWearCheck(data_path,configurations,debug=False):
     
         method: 'hr_continue' (default), 'calories_continue', 'calories_hourly','all'
         evaluate valid wear days,
-        if 'hr_continue', from the number of minutes with HR data found in daily data files.
+        if 'hr_continue', from the number of minutes with HR data found in daily data files. HR data files are used.
         if 'calories_continue', from the number of minutes with EE above REE. Minute data files are used.
         if 'calories_hourly', from the number of hours with a least a selected number of minutes with EE above REE minute. Minute data files are used.
-        
 
         hr_continue: int between 0 and 1440. (default = 600)
         number of minutes to be used as evaluation criteria for the 'hr_continue' method.
@@ -229,20 +228,20 @@ def ActiWearCheck(data_path,configurations,debug=False):
         number of hours and minute-per-hour to be used as evaluation criteria for the 'calories_hourly' method.
 
         steps: boolean (default = True)
-        An option to evaluate valid wear based on the daily number of steps.
+        an option to evaluate valid wear based on the daily number of steps.
 
         steps_param: int equal or higher than 0 (default = 1)
         number of steps to be used as evaluation criteria when steps = True.
 
         minute_day: boolean (default = True)
-        an option to evaluate valid wear based on the ratio of minute data (steps and calories) resampled to day and daily data obtained from daily summarize files.
+        An option to evaluate valid wear based on the ratio of minute data (steps and calories) resampled to day and daily data obtained from daily summarize files.
 
         minute day_param: float between 0.0 and 1.0 (default = 0.9)
-        ratio to be used as evaluation criteria when  = True.
-        
+        ratio of difference between "per day" data, and "per minute" data resampled by day, to be used as evaluation criteria when  = True.
+
         synch_check: boolean (default = False)
-        an option to evaluate the validity of data based on the interval between two device synchronization dates.
-        the interval criteria depends on the device specifications (alta, alta hr and inspire 2 devices are currently supported).
+        an option to evaluate the validity of data based on the interval between two synchronization dates.
+        the interval criteria depends on the device specifications (currently supported for the following devices: alta, alta hr and inspire 2).
 
         waking: boolean (default = False)
         if True, conduct the valid wear evaluation between 5:00 and 22:59 only.
@@ -250,10 +249,10 @@ def ActiWearCheck(data_path,configurations,debug=False):
 
         fitabase_suffixes:
         string to be found in fitabase file names for hr, minute calories, daily calories, minutes steps, daily steps and synch data.
-    
+
         fitabase_series:
         name of time series of interest for hr, calories, minute steps and daily steps data.
-    
+
         drop_na: boolean (default = True)
         if True, remove days with no data.
 
@@ -263,7 +262,8 @@ def ActiWearCheck(data_path,configurations,debug=False):
         output_basename: string (default = 'actiwear')
         name of the output csv file.
 
-        debug: boolean (default = False)
+        debug: boolean (default = False)  
+        prints all steps and information to debug.
 
     """
     print("Starting ActiWearCheck...")
@@ -304,7 +304,7 @@ def ActiWearCheck(data_path,configurations,debug=False):
             else:
                 data_out[id_] = [data]
             if debug:
-                print("one file finished")
+                print("One file finished")
 
 
     
@@ -360,7 +360,7 @@ def ActiWearCheck(data_path,configurations,debug=False):
                 data_align = data_align.rename(columns={series+"_x": series+" resampled (from min files)", series+"_y": series+" from day files"})
                 data_step = pd.merge(data_step_min, data_step_day, left_index=True, right_index=True)
                 if debug:
-                    print("alignment data")
+                    print("Alignment data")
                     print(pd.concat([data_step,data_align],axis=1))
                 # Perform the comparison after alignment
                 data_align['diff'] = (data_align[series+" resampled (from min files)"].astype('float') / data_align[series+" from day files"].astype('float')) >= configurations["minute_day_param"]
@@ -381,7 +381,7 @@ def ActiWearCheck(data_path,configurations,debug=False):
             else:
                 data_out[id_] = [data]  
             if debug:                                          
-                print("one file finished")
+                print("One file finished")
 
         if configurations["steps"]:
             for file in files["steps_day"]:
@@ -403,7 +403,7 @@ def ActiWearCheck(data_path,configurations,debug=False):
                 else:
                     data_out[id_] = [data]  
                 if debug:                                          
-                    print("one file finished")
+                    print("One file finished")
 
     if configurations["synch_check"]:
         synchs = synch_check(files, configurations)
@@ -432,7 +432,7 @@ def ActiWearCheck(data_path,configurations,debug=False):
 
     # check that all data are consistent
     if len(set([len(data_out[_id]) for _id in data_out])) != 1:
-        print("Warning: inconsistent number of data types across individuals")
+        print("warning, inconsistent number of data types across individuals")
         print([(_id, len(data_out[_id])) for _id in data_out])
 
     print("Saving data...")
@@ -448,7 +448,7 @@ def ActiWearCheck(data_path,configurations,debug=False):
 
         if configurations["subjectwise_output"]:
             f.to_csv(configurations["output_basename"]+str(_id)+".csv")
-    print("...Done")
+    # print("...Done")
     return pd.concat(frames)
 
 def read_configurations(config_path):
