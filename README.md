@@ -10,9 +10,9 @@ This repository contains:
 
 ```python3 actiwearcheck.py [-d path_to_data] [-o path_to_output] [-c path_to_config]```
 
-<strong>path_to_data</strong>: path to the fitbit data folder, e.g. <a href="https://github.com/OchaUni-Physical-Activity-Measurement/ActiWearCheck/tree/main/samples">.ActiWearCheck/samples/</a>. If not provided, defaults to the current directory.<br>
-<strong>path_to_output</strong>: path where the results will be saved. If not provided, defaults to the current directory.<br>
-<strong>path_to_config</strong>: path to the configuration file for the analysis, provided in the yaml format. If not provided, defaults to <a href="https://github.com/OchaUni-Physical-Activity-Measurement/ActiWearCheck/blob/main/actiwearcheck/conf/default_conf.yaml">conf/default_conf.yaml</a>. See that file for an exaustive list of options. <strong>The default configuration works with Fitabase export files</strong>.
+- <strong>path_to_data</strong>: path to the fitbit data folder, e.g. <a href="https://github.com/OchaUni-Physical-Activity-Measurement/ActiWearCheck/tree/main/samples">.ActiWearCheck/samples/</a>. If not provided, defaults to the current directory.
+- <strong>path_to_output</strong>: path where the results will be saved. If not provided, defaults to the current directory.
+- <strong>path_to_config</strong>: path to the configuration file for the analysis, provided in the yaml format. If not provided, defaults to <a href="https://github.com/OchaUni-Physical-Activity-Measurement/ActiWearCheck/blob/main/actiwearcheck/conf/default_conf.yaml">conf/default_conf.yaml</a>. See that file for an exaustive list of options. <strong>The default configuration works with Fitabase export files</strong>.
 
 ### methods of evaluation
 
