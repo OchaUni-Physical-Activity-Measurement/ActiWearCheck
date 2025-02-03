@@ -9,6 +9,7 @@ minute_day: True
 minute_day_param: 0.9
 synch_check: True
 waking: False
+data_format: "fitabase" # filename patterns for data files
 fitabase_suffixes:
   hr: "fitbitWearTimeViaHR"
   calories_minutes: "minuteCaloriesNarrow"

@@ -115,9 +115,9 @@ def check_configuration_integrity(configurations, paths):
 
 
 
-def get_files(data_path,configurations,debug=False):
+def get_files(data_path,configurations,default_format="fitabase", debug=False):
     """
-    Imports file, as extracted from Fitabase.
+    Imports file, as extracted from the specified API (default: Fitabase).
     Arguments:
     - data_path: where data are located
     - condigurations: the configuration.yaml file to apply
@@ -126,10 +126,14 @@ def get_files(data_path,configurations,debug=False):
     - paths = dictionary of data
     """
     print("Importing data...")
-    # For Fitabase only
+    if "data_format" in configurations:
+        data_format = configurations["data_format"]
+    else:
+        data_format = default_format
+
     suffixes = {}
     paths = {}
-    suf = configurations["fitabase_suffixes"]
+    suf = configurations[f"{data_format}_suffixes"]
     for key in suf:
         suffixes[suf[key]] = key   
         # getting paths of interest
@@ -163,20 +167,23 @@ def get_files(data_path,configurations,debug=False):
     
     return paths
 
-def synch_check(files, configurations, default_max_days=5, debug=False):
+def synch_check(files, configurations, default_max_days=5, default_format="fitabase", debug=False):
     all_Synch_data = {}
-    
+    if "data_format" in configurations:
+        data_format = configurations["data_format"]
+    else:
+        data_format = default_format
     print("Starting synchronisation check...")
     for file in files["synch"]:
         if debug:
             print(file)
         id_ = os.path.basename(file)
         id_=id_.split("_")[0]
-        series=configurations["fitabase_series"]["synch"]
+        series=configurations[f"{data_format}_series"]["synch"]
         synch_data = pd.read_csv(file).set_index("DateTime")
         synch_data.index = pd.to_datetime(synch_data.index,format="%m/%d/%Y %I:%M:%S %p")
         synch_data[series] = pd.to_datetime(synch_data[series],format="%m/%d/%Y %I:%M:%S %p")
-        device_name = synch_data[configurations["fitabase_series"]["device_name"]].to_numpy()[0].lower()
+        device_name = synch_data[configurations[f"{data_format}_series"]["device_name"]].to_numpy()[0].lower()
         # Sort by time
         synch_data = synch_data.sort_values(by=series)
         # Calculate differences between consecutive sync times
@@ -203,7 +210,7 @@ def synch_check(files, configurations, default_max_days=5, debug=False):
 ####################
 # MAIN CHECK
 ####################
-def ActiWearCheck(data_path,configurations,debug=False):
+def ActiWearCheck(data_path,configurations, default_format="fitabase", debug=False):
     """
     data_path : None or string
     if None, take the files in the current directory.
@@ -268,6 +275,11 @@ def ActiWearCheck(data_path,configurations,debug=False):
     """
     print("Starting ActiWearCheck...")
 
+    if "data_format" in configurations:
+        data_format = configurations["data_format"]
+    else:
+        data_format = default_format
+
     if data_path is None:
         data_path = os.getcwd()
         
@@ -292,7 +304,7 @@ def ActiWearCheck(data_path,configurations,debug=False):
                 print("Analyzing", file)
             id_ = os.path.basename(file)
             id_=id_.split("_")[0]
-            series= configurations["fitabase_series"]["hr"]
+            series= configurations[f"{data_format}_series"]["hr"]
             data=pd.read_csv(file).set_index("Day")
             data.index = pd.to_datetime(data.index)
             data["ID"] = id_
@@ -316,7 +328,7 @@ def ActiWearCheck(data_path,configurations,debug=False):
                 print(file)
             id_ = os.path.basename(file)
             id_=id_.split("_")[0]
-            series=configurations["fitabase_series"]["calories"]
+            series=configurations[f"{data_format}_series"]["calories"]
             data_min=pd.read_csv(file).set_index("ActivityMinute")
             data_min.index = pd.to_datetime(data_min.index,format="%m/%d/%Y %I:%M:%S %p")
             data_min['RMR'] = data_min.resample('D')[series].transform('min')
@@ -364,7 +376,7 @@ def ActiWearCheck(data_path,configurations,debug=False):
                     print(pd.concat([data_step,data_align],axis=1))
                 # Perform the comparison after alignment
                 data_align['diff'] = (data_align[series+" resampled (from min files)"].astype('float') / data_align[series+" from day files"].astype('float')) >= configurations["minute_day_param"]
-                data_step['diff'] = (data_step[configurations["fitabase_series"]["steps"]].astype("float") / data_step[configurations["fitabase_series"]["steps_day"]].astype("float")) >= configurations["minute_day_param"]
+                data_step['diff'] = (data_step[configurations[f"{data_format}_series"]["steps"]].astype("float") / data_step[configurations[f"{data_format}_series"]["steps_day"]].astype("float")) >= configurations["minute_day_param"]
                 data["day/min_calory_alignment"] = data_align['diff']
                 data["day/min_step_alignment"] = data_step["diff"]
                 # print(data)
@@ -392,7 +404,7 @@ def ActiWearCheck(data_path,configurations,debug=False):
 
                 id_ = os.path.basename(file)
                 id_=id_.split("_")[0]
-                series=configurations["fitabase_series"]["steps_day"]
+                series=configurations[f"{data_format}_series"]["steps_day"]
                 data["ID"] = id_   
                 data["Stepped"] = data[series] >= configurations["steps_param"]
                 if debug:
@@ -420,7 +432,7 @@ def ActiWearCheck(data_path,configurations,debug=False):
             print("Reading device name from", file)
         id_ = os.path.basename(file)
         id_=id_.split("_")[0]
-        device_name= configurations["fitabase_series"]["device_name"]
+        device_name= configurations[f"{data_format}_series"]["device_name"]
         data=pd.read_csv(file)[device_name][0]
         device_names[id_] = data
 
@@ -441,7 +453,7 @@ def ActiWearCheck(data_path,configurations,debug=False):
     for _id in id_list:
         f = pd.concat(data_out[_id], axis=1)
         if _id in device_names:
-            f[configurations["fitabase_series"]["device_name"]] = device_names[_id]
+            f[configurations[f"{data_format}_series"]["device_name"]] = device_names[_id]
         if configurations["drop_na"]:
             f.dropna(inplace=True)
         frames.append(f)
@@ -451,7 +463,7 @@ def ActiWearCheck(data_path,configurations,debug=False):
     # print("...Done")
     return pd.concat(frames)
 
-def read_configurations(config_path):
+def read_configurations(config_path, default_format="fitabase"):
     """
     (...)
     """
@@ -460,6 +472,8 @@ def read_configurations(config_path):
         config = yaml.safe_load(yml)
     if "method" in config and (config["method"] == "all" or "all" in config["method"]):
         config["method"] = config["all_methods"]
+    if not "data_format" in config:
+        config["data_format"] = default_format
     return config
 
 if __name__ == "__main__":
@@ -471,12 +485,16 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--outputpath', type=str, default="./", help = "Output directory")
     parser.add_argument('-c', '--configFilename', type=str, default='conf/default_conf.yaml', help = "Path to configuration file")
     parser.add_argument('--devicesFilename', type=str, default='devices/20241015_devices.yaml', help = "Path to devices definitions")
+    parser.add_argument('--dataFormat', type=str, default=None, help = "Selects the file format of the data. If set, will override the configuration settings. \
+        If no format is selected at all, will default to fitabase.")
     args = parser.parse_args()
 
     configurations = read_configurations(args.configFilename)
     devices = read_configurations(args.devicesFilename)
     configurations["output_basename"] = os.path.join(args.outputpath, configurations["output_basename"])
     configurations["devices"] = devices
+    if args.dataFormat is not None:
+        configurations["data_format"] = args.dataFormat
     result = ActiWearCheck(args.dataFilepath,configurations, debug=configurations["debug"])
 
     if not configurations["subjectwise_output"]:
