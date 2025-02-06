@@ -453,11 +453,17 @@ def ActiWearCheck(data_path,configurations, default_format="fitabase", debug=Fal
     id_list = sorted(data_out.keys())
     frames = []
     for _id in id_list:
-        f = pd.concat(data_out[_id], axis=1)
         if _id in device_names:
-            f[configurations[f"{data_format}_series"]["device_name"]] = device_names[_id]
+            # merge everything except the sync data
+            f = pd.concat(data_out[_id][:-1], axis=1) 
+        else:
+            # no sync data available
+            f = pd.concat(data_out[_id], axis=1) 
         if configurations["drop_na"]:
             f.dropna(inplace=True)
+        if _id in device_names:
+            f = pd.concat([f,data_out[_id][-1]], axis=1)
+            f[configurations[f"{data_format}_series"]["device_name"]] = device_names[_id]
         frames.append(f)
 
         if configurations["subjectwise_output"]:
