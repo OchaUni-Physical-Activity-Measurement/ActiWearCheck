@@ -30,11 +30,13 @@ The current configuration file accepts 3 different methods for evaluation of val
 
 #### full documentation (help)
 ```
-method: 'hr_continue' (default), 'calories_continue', 'calories_hourly','all'
-evaluate valid wear days,
-if 'hr_continue', from the number of minutes with HR data found in daily data files. HR data files are used.
-if 'calories_continue', from the number of minutes with EE above REE. Minute data files are used.
-if 'calories_hourly', from the number of hours with a least a selected number of minutes with EE above REE minute. Minute data files are used.
+method: 'hr_continue' (default), 'calories_continue', 'calories_hourly', 'steps_day', 'steps_hourly', 'all'
+Evaluate valid wear days.
+'hr_continue': from the number of minutes with HR data found in daily data files. HR data files are used.
+'calories_continue': from the number of minutes with EE above REE. Minute data files are used.
+'calories_hourly': from the number of hours with a least a selected number of minutes with EE above REE minute. Minute data files are used.
+'steps_day': from the number of steps recorded during the day. Steps files are used.
+'steps_hourly': from the number of hours with enough steps during the day. Minute steps data files are used.
 
 hr_continue: int between 0 and 1440. (default = 600)
 number of minutes to be used as evaluation criteria for the 'hr_continue' method.
@@ -45,11 +47,11 @@ number of minutes to be used as evaluation criteria for the 'calories_continue' 
 calories_hourly: [int between 1 and 24, int between 1 and 60] (default = [10, 1])
 number of hours and minute-per-hour to be used as evaluation criteria for the 'calories_hourly' method.
 
-steps: boolean (default = True)
-an option to evaluate valid wear based on the daily number of steps.
+steps_day: int equal or higher than 0 (default = 1)
+number of steps to be used as evaluation criteria for the 'steps_day' method.
 
-steps_param: int equal or higher than 0 (default = 1)
-number of steps to be used as evaluation criteria when steps = True.
+steps_hourly: [int between 1 and 24, int between 1 and 60] (default = [10, 1])
+number of hours and steps-per-hour to be used as evaluation criteria for the 'steps_hourly' method.
 
 minute_day: boolean (default = True)
 An option to evaluate valid wear based on the ratio of minute data (steps and calories) resampled to day and daily data obtained from daily summarize files.
