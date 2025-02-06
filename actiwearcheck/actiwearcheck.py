@@ -35,7 +35,7 @@ def check_configuration_integrity(configurations, paths):
         method = [method]
     for key in method: # check settings are valid
         th = configurations[key] # get the relevant settings
-        if key == "calories_hourly":
+        if key == "calories_hourly" or key == "steps_hourly":
             if not isinstance(th, list) or len(th) !=2:
                 print("error, 'hourly' set to True, 'threshold' should be a list of two values")
                 return False
@@ -89,8 +89,6 @@ def check_configuration_integrity(configurations, paths):
         if len(paths["steps_minutes"]) == 0:
             print("error, intraday steps data files not found")
             return False
-        if configurations["hours_with_steps"] > 24:
-            print("error, attempting to use more than 24 hours per day")
      
     # checking configuration for "minute_day and minute_day_param"
     if not configurations["minute_day"]:
@@ -434,12 +432,12 @@ def ActiWearCheck(data_path,configurations, default_format="fitabase", debug=Fal
                 series=configurations[f"{data_format}_series"]["steps"]
                 data_min=pd.read_csv(file).set_index("ActivityMinute")
                 data_min.index = pd.to_datetime(data_min.index,format="%m/%d/%Y %I:%M:%S %p")
-                stepped_hours = data_min.resample("H").sum() > configurations["steps_hourly"]
+                stepped_hours = data_min.resample("H").sum() > configurations["steps_hourly"][1]
                 data = data_min.resample("D").sum()
                 data["Hours with steps"] = stepped_hours.resample("D").sum()
                 data["ID"] = id_   
                 data=data[["ID","Hours with steps"]]
-                data["Valid wear Steps (hour)"] = data["Hours with steps"] >= configurations["hours_with_steps"]
+                data["Valid wear Steps (hour)"] = data["Hours with steps"] >= configurations["steps_hourly"][0]
                 if debug:
                     print(data)
                 if id_ in data_out:

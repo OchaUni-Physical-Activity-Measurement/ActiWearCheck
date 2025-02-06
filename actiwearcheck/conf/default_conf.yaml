@@ -4,8 +4,7 @@ hr_continue: 600
 calories_continue: 600
 calories_hourly: [10, 1]
 steps_day: 1
-steps_hourly: 1
-hours_with_steps: 8
+steps_hourly: [10, 1]
 minute_day: True
 minute_day_param: 0.9
 synch_check: True

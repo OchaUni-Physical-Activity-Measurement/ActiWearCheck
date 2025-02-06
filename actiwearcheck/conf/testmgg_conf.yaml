@@ -4,8 +4,7 @@ hr_continue: 600                # number of minutes considered worn by the heart
 calories_continue: 600          # number of minutes active during the day
 calories_hourly: [10, 1]         # number of hours containing a number of active minutes during the day
 steps_day: 1                  # amount of steps during the day to be considered valid
-steps_hourly: 1
-hours_with_steps: 8
+steps_hourly: [10, 1]
 minute_day: True
 minute_day_param: 0.9
 synch_check: True
