@@ -1,14 +1,16 @@
-all_methods: ["hr_continue", "calories_continue", "calories_hourly"] # List of all available methods
+all_methods: ["hr_continue", "calories_continue", "calories_hourly", "steps_day", "steps_hourly"] # list of all available methods
 method: "all"                   # can be one string, a list of available methods, or "all"
 hr_continue: 600                # number of minutes considered worn by the heart-rate lense
 calories_continue: 600          # number of minutes active during the day
 calories_hourly: [10, 1]         # number of hours containing a number of active minutes during the day
-steps: True                     # set to True if you want to check for a minimum of steps during the day
-steps_param: 1                  # amount of steps during the day to be considered valid
+steps_day: 1                  # amount of steps during the day to be considered valid
+steps_hourly: 1
+hours_with_steps: 8
 minute_day: True
 minute_day_param: 0.9
-synch_check: True # TODO
+synch_check: True
 waking: False
+data_format: "fitabase" # filename patterns for data files
 fitabase_suffixes:
   hr: "fitbitWearTimeViaHR"
   calories_minutes: "minuteCaloriesNarrow"

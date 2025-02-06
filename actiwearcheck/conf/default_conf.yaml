@@ -1,10 +1,11 @@
-all_methods: ["hr_continue", "calories_continue", "calories_hourly"] # List of all available methods
+all_methods: ["hr_continue", "calories_continue", "calories_hourly", "steps_day", "steps_hourly"] # List of all available methods
 method: "hr_continue" # can be one string, a list of available methods, or "all"
 hr_continue: 600
 calories_continue: 600
 calories_hourly: [10, 1]
-steps: True
-steps_param: 1
+steps_day: 1
+steps_hourly: 1
+hours_with_steps: 8
 minute_day: True
 minute_day_param: 0.9
 synch_check: True

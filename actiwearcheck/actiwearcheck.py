@@ -80,11 +80,17 @@ def check_configuration_integrity(configurations, paths):
         if configurations["calories_continue"] > 1440:
             print("error, a day contains 1440 minutes only")
             return False
-    if configurations["steps"]:
+    if "steps_day" in method:
         if len(paths["steps_day"]) == 0:
-            print("error, step data files not found")
+            print("error, steps data files not found")
             # TODO: add the fallback on minute files (with a warning)
             return False
+    if "steps_hourly" in method:
+        if len(paths["steps_minutes"]) == 0:
+            print("error, intraday steps data files not found")
+            return False
+        if configurations["hours_with_steps"] > 24:
+            print("error, attempting to use more than 24 hours per day")
      
     # checking configuration for "minute_day and minute_day_param"
     if not configurations["minute_day"]:
@@ -397,7 +403,7 @@ def ActiWearCheck(data_path,configurations, default_format="fitabase", debug=Fal
             if debug:                                          
                 print("One file finished")
 
-        if configurations["steps"]:
+        if "steps_day" in configurations["method"]:
             for file in files["steps_day"]:
                 if debug:
                     print(file)
@@ -408,7 +414,32 @@ def ActiWearCheck(data_path,configurations, default_format="fitabase", debug=Fal
                 id_=id_.split("_")[0]
                 series=configurations[f"{data_format}_series"]["steps_day"]
                 data["ID"] = id_   
-                data["Stepped"] = data[series] >= configurations["steps_param"]
+                data["Valid wear Steps"] = data[series] >= configurations["steps_day"]
+                if debug:
+                    print(data)
+                if id_ in data_out:
+                    data.drop(columns=["ID"], inplace=True) # We already know it
+                    data_out[id_].append(data)
+                else:
+                    data_out[id_] = [data]  
+                if debug:                                          
+                    print("One file finished")
+
+        if "steps_hourly" in configurations["method"]:
+            for file in files["steps_minutes"]:
+                if debug:
+                    print(file)
+                id_ = os.path.basename(file)
+                id_=id_.split("_")[0]
+                series=configurations[f"{data_format}_series"]["steps"]
+                data_min=pd.read_csv(file).set_index("ActivityMinute")
+                data_min.index = pd.to_datetime(data_min.index,format="%m/%d/%Y %I:%M:%S %p")
+                stepped_hours = data_min.resample("H").sum() > configurations["steps_hourly"]
+                data = data_min.resample("D").sum()
+                data["Hours with steps"] = stepped_hours.resample("D").sum()
+                data["ID"] = id_   
+                data=data[["ID","Hours with steps"]]
+                data["Valid wear Steps (hour)"] = data["Hours with steps"] >= configurations["hours_with_steps"]
                 if debug:
                     print(data)
                 if id_ in data_out:
