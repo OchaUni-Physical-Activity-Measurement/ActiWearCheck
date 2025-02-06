@@ -373,6 +373,8 @@ def ActiWearCheck(data_path,configurations, default_format="fitabase", debug=Fal
                 data_step = pd.merge(data_step_min, data_step_day, left_index=True, right_index=True)
                 if debug:
                     print("Alignment data")
+                    print(data_step)
+                    print(data_align)
                     print(pd.concat([data_step,data_align],axis=1))
                 # Perform the comparison after alignment
                 data_align['diff'] = (data_align[series+" resampled (from min files)"].astype('float') / data_align[series+" from day files"].astype('float')) >= configurations["minute_day_param"]

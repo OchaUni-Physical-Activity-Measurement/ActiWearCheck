@@ -249,15 +249,12 @@ if __name__ == "__main__":
 			period = "max"
 			end_date = None
 		else:
-			if len(df) == 1:
-				# multiple updates the first day
-				base_date = datetime.datetime.strptime(df.iloc[-1,1],"%m/%d/%Y %I:%M:%S %p").strftime("%Y-%m-%d")
-			else:
-				base_date = datetime.datetime.strptime(df.iloc[-2,1],"%m/%d/%Y %I:%M:%S %p").strftime("%Y-%m-%d")
-			end_date = datetime.datetime.strptime(df.iloc[-1,1],"%m/%d/%Y %I:%M:%S %p").strftime("%Y-%m-%d")
+			base_date = datetime.datetime.strptime(df.iloc[-1,1],"%m/%d/%Y %I:%M:%S %p").strftime("%Y-%m-%d")
+			end_date = datetime.datetime.now().strftime("%Y-%m-%d")
 			period = None
 		for activity in _eq_activity_list:
 			print(activity)
+			print(base_date, end_date)
 			update_daily_activity(args.output, activity, authed_client.time_series(_eq_entry_list[activity], base_date= base_date, end_date=end_date, period=period), keep=args.keep)
 			print("=================================")
 		for activity in _eq_intraday_list:
