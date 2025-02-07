@@ -8,6 +8,8 @@ import os
 import yaml
 import pandas as pd
 import time
+from datetime import timedelta
+import numpy as np
 
 ######################
 # SETUP
@@ -68,8 +70,7 @@ def check_configuration_integrity(configurations, paths):
             print("error, a day contains 1440 minutes only")
             return False
         if configurations["waking"]:
-            print("error, option 'waking' is not compatible with HR")
-            return False
+            print("WARNING, option 'waking' is not compatible with HR")
         if len(paths["hr"]) == 0:
             print("error, HR data files not found")
             return False
@@ -185,28 +186,35 @@ def synch_check(files, configurations, default_max_days=5, default_format="fitab
         id_=id_.split("_")[0]
         series=configurations[f"{data_format}_series"]["synch"]
         synch_data = pd.read_csv(file).set_index("DateTime")
-        synch_data.index = pd.to_datetime(synch_data.index,format="%m/%d/%Y %I:%M:%S %p")
-        synch_data[series] = pd.to_datetime(synch_data[series],format="%m/%d/%Y %I:%M:%S %p")
-        device_name = synch_data[configurations[f"{data_format}_series"]["device_name"]].to_numpy()[0].lower()
-        # Sort by time
-        synch_data = synch_data.sort_values(by=series)
-        # Calculate differences between consecutive sync times
-        synch_data['time_diff'] = synch_data[series].diff().dt.days
-        synch_data['time_diff'] = synch_data['time_diff'].fillna(0) # Change Nan for 0 so that idxmax can be processed
-        # Group data daywise and return the line where the time difference is maximum
-        synch_data = synch_data.groupby(synch_data.index.date).apply(lambda x: x.loc[x['time_diff'].idxmax()])
-        # Reset the index to be a datetime
-        synch_data.index = pd.to_datetime(synch_data.index)                     
-        # Check if the time difference exceeds max_days
+        device_names = synch_data[configurations[f"{data_format}_series"]["device_name"]]
+        device_name = device_names.iloc[0]
+        if len(device_names[device_names != device_name]) > 0:
+            print(device_names != device_name)
+            print("WARNING: sync data from multiple devices detected. This situation is not supported and may lead to unexpected results.")
+        device_name = device_name.lower()
         if device_name in configurations["devices"]:
             max_days = float(configurations["devices"][device_name]["memory"])
         else:
             max_days = default_max_days
             print(f"warning, unknown device {device_name}, defaulting to {max_days} days")
             print(configurations["devices"])
-        # Compute the data_loss_risk in a vectorized manner
+        synch_data.index = pd.to_datetime(synch_data.index,format="%m/%d/%Y %I:%M:%S %p")
+        
+        synch_data[series] = pd.to_datetime(synch_data[series],format="%m/%d/%Y %I:%M:%S %p")
+        synch_data = synch_data.groupby(synch_data.index.date).apply(lambda x: x.loc[x[series].idxmin()])
+        synch_data.index = pd.to_datetime(synch_data.index).floor("D")
+        idx = pd.date_range(min(synch_data.index)-timedelta(days=max_days), max(synch_data.index)) 
+        synch_data = synch_data.reindex(pd.to_datetime(idx))
+        time_diffs = []
+        previous_row = None
+        for index in synch_data.index[::-1]: #we start from the end
+            if synch_data.loc[index].isnull().any():
+                synch_data.loc[index] = previous_row
+            else:
+                previous_row = synch_data.loc[index]
+            time_diffs.append((synch_data.loc[index][series]-index).days)
+        synch_data['time_diff'] = time_diffs[::-1]
         synch_data['data_loss_risk'] = synch_data['time_diff'] > max_days
-        #synch_data['data_loss_risk'] = synch_data['time_diff'] > 5 
         all_Synch_data[id_] = synch_data       
     
     return all_Synch_data
@@ -482,17 +490,9 @@ def ActiWearCheck(data_path,configurations, default_format="fitabase", debug=Fal
     id_list = sorted(data_out.keys())
     frames = []
     for _id in id_list:
-        if _id in device_names:
-            # merge everything except the sync data
-            f = pd.concat(data_out[_id][:-1], axis=1) 
-        else:
-            # no sync data available
-            f = pd.concat(data_out[_id], axis=1) 
+        f = pd.concat(data_out[_id], axis=1) 
         if configurations["drop_na"]:
             f.dropna(inplace=True)
-        if _id in device_names:
-            f = pd.concat([f,data_out[_id][-1]], axis=1)
-            f[configurations[f"{data_format}_series"]["device_name"]] = device_names[_id]
         frames.append(f)
 
         if configurations["subjectwise_output"]:

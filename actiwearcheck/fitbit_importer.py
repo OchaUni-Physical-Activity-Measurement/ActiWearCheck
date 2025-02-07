@@ -103,15 +103,7 @@ def parse_steps(res):
 	return df
 
 def parse_weartime(res):
-	lines = []
-	columns = ["Day", "TotalMinutesWearTime"]
-	entries = res['activities-heart']
-	for entry in entries: 
-		lines.append([datetime.datetime.strptime(entry['dateTime'],"%Y-%m-%d").strftime("%m/%d/%Y"),np.sum([value['minutes'] if 'minutes' in value else 0 for value in entry['value']['heartRateZones']])])
-	df = pd.DataFrame(lines, columns=columns)
-	return df
-
-def parse_minute_wear(res):
+	print(res)
 	lines = []
 	columns = ["Day", "TotalMinutesWearTime"]
 	entries = res['activities-heart']
@@ -207,7 +199,7 @@ def update_intraday_activity(name, activity, max_days=7, keep=False):
 	final_df = pd.concat(all_df)
 	final_df.to_csv(f"{name}_{activity}_"+from_date.strftime("%Y%m%d")+"_"+end_date.strftime("%Y%m%d")+".csv",index=False)
 	if not keep and overlap_check is not None and overlap_check.strftime("%Y%m%d") != end_date.strftime("%Y%m%d"):
-		os.remove("{name}_{activity}_"+from_date.strftime("%Y%m%d")+"_"+overlap_check.strftime("%Y%m%d")+".csv")
+		os.remove(f"{name}_{activity}_"+from_date.strftime("%Y%m%d")+"_"+overlap_check.strftime("%Y%m%d")+".csv")
 
 _eq_activity_list = {"dailyCalories": "Calories", "dailySteps": "StepTotal", "fitbitWearTimeViaHR": "TotalMinutesWearTime"}
 _eq_intraday_entry = {"minuteCaloriesNarrow": 'activities-calories-intraday', "minuteStepsNarrow": 'activities-steps-intraday'}
