@@ -9,6 +9,7 @@ minute_day: True
 minute_day_param: 0.9
 synch_check: True
 waking: False
+waking_hours: ["5:00", "22:59" ] # if waking is True, only hours in that range will be taken into account
 data_format: "fitabase" # filename patterns for data files
 fitabase_suffixes:
   hr: "fitbitWearTimeViaHR"

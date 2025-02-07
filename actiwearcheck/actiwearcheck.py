@@ -347,14 +347,14 @@ def ActiWearCheck(data_path,configurations, default_format="fitabase", debug=Fal
                 data_min['minAboveRMR'] = (data_min[series] > data_min['RMR']).astype(int)
                 data_min['hourAboveRMR'] = data_min['minAboveRMR'].resample('h').sum() >= configurations["calories_hourly"][1]
                 if configurations["waking"]:
-                    data['hourAboveRMR'] = data_min.between_time('5:00','22:59')['hourAboveRMR'].resample('D').sum().to_frame()    
+                    data['hourAboveRMR'] = data_min.between_time(configurations["waking_hours"][0],configurations["waking_hours"][1])['hourAboveRMR'].resample('D').sum().to_frame()    
                 else:
                     data['hourAboveRMR'] = data_min['hourAboveRMR'].resample('D').sum().to_frame()    
                 data['Cal-worn(per-hour)'] = data['hourAboveRMR'] >= configurations["calories_hourly"][0]  
             
             if "calories_continue" in configurations["method"]:
                 if configurations["waking"]:    
-                    data['nMinAboveRMR'] = data_min.between_time('5:00','22:59')[data_min[series] > data_min['RMR']].resample('D').count()[series]
+                    data['nMinAboveRMR'] = data_min.between_time(configurations["waking_hours"][0],configurations["waking_hours"][1])[data_min[series] > data_min['RMR']].resample('D').count()[series]
                 else:
                     data['nMinAboveRMR'] = data_min[data_min[series] > data_min['RMR']].resample('D').count()[series]
                 data['Cal-worn'] = data['nMinAboveRMR'] >= configurations["calories_continue"]
