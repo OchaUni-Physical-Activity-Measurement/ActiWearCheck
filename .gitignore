@@ -11,8 +11,4 @@
 .com.apple.timemachine.donotpresent
 .fseventsd
 *~
-# Ignore data for analysis (can be provided on demand)
-analysis/actiwear_20241017.csv
-#illustration for reviewing
-analysis/steps_per_minute.csv       
-analysis/calories_per_minute.csv
+
