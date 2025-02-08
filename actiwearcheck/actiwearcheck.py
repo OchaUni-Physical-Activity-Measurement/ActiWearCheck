@@ -52,7 +52,7 @@ def check_configuration_integrity(configurations, paths):
                 print("error, time method set to negative")
                 return False
             if (th[0] == 0) or (th[1] == 0):
-                print("warning, thresholds set to 0")
+                print("WARNING: thresholds set to 0")
         else:
             if not isinstance(th, int):
                 print(f"error, threshold for {key} should be an integer")
@@ -62,7 +62,7 @@ def check_configuration_integrity(configurations, paths):
                 print("error, time method set to negative")
                 return False
             if (th == 0):
-                print("warning, threshold sets to 0")
+                print("WARNING: threshold sets to 0")
 
 
     if "hr_continue" in method:
@@ -70,7 +70,7 @@ def check_configuration_integrity(configurations, paths):
             print("error, a day contains 1440 minutes only")
             return False
         if configurations["waking"]:
-            print("WARNING, option 'waking' is not compatible with HR")
+            print("WARNING: option 'waking' is not compatible with HR")
         if len(paths["hr"]) == 0:
             print("error, HR data files not found")
             return False
@@ -103,7 +103,7 @@ def check_configuration_integrity(configurations, paths):
             print("error, 'minute_day_param' should be a float between 0 and 1")
             return False
         if "calories_continue" not in method and "calories_hourly" not in method:
-            print("warning, data alignment check currently only supported for calories data, calory and step files will be used.")
+            print("WARNING: data alignment check currently only supported for calories data, calory and step files will be used.")
             
         if len(paths["calories_day"]) != len(paths["calories_minutes"]):
             print("error, the number of dailyCalories and minuteCalories files are different")
@@ -196,7 +196,7 @@ def synch_check(files, configurations, default_max_days=5, default_format="fitab
             max_days = float(configurations["devices"][device_name]["memory"])
         else:
             max_days = default_max_days
-            print(f"warning, unknown device {device_name}, defaulting to {max_days} days")
+            print(f"WARNING: unknown device {device_name}, defaulting to {max_days} days")
             print(configurations["devices"])
         synch_data.index = pd.to_datetime(synch_data.index,format="%m/%d/%Y %I:%M:%S %p")
         
@@ -420,7 +420,7 @@ def ActiWearCheck(data_path,configurations, default_format="fitabase", debug=Fal
                 id_=id_.split("_")[0]
                 series=configurations[f"{data_format}_series"]["steps_day"]
                 data["ID"] = id_   
-                data["Valid wear Steps"] = data[series] >= configurations["steps_day"]
+                data["Steps-worn"] = data[series] >= configurations["steps_day"]
                 if debug:
                     print(data)
                 if id_ in data_out:
@@ -440,12 +440,12 @@ def ActiWearCheck(data_path,configurations, default_format="fitabase", debug=Fal
                 series=configurations[f"{data_format}_series"]["steps"]
                 data_min=pd.read_csv(file).set_index("ActivityMinute")
                 data_min.index = pd.to_datetime(data_min.index,format="%m/%d/%Y %I:%M:%S %p")
-                stepped_hours = data_min.resample("H").sum() > configurations["steps_hourly"][1]
+                stepped_hours = data_min.resample("h").sum() > configurations["steps_hourly"][1]
                 data = data_min.resample("D").sum()
                 data["Hours with steps"] = stepped_hours.resample("D").sum()
                 data["ID"] = id_   
                 data=data[["ID","Hours with steps"]]
-                data["Valid wear Steps (hour)"] = data["Hours with steps"] >= configurations["steps_hourly"][0]
+                data["Steps-worn(per-hour)"] = data["Hours with steps"] >= configurations["steps_hourly"][0]
                 if debug:
                     print(data)
                 if id_ in data_out:
@@ -483,7 +483,7 @@ def ActiWearCheck(data_path,configurations, default_format="fitabase", debug=Fal
 
     # check that all data are consistent
     if len(set([len(data_out[_id]) for _id in data_out])) != 1:
-        print("warning, inconsistent number of data types across individuals")
+        print("WARNING: inconsistent number of data types across individuals")
         print([(_id, len(data_out[_id])) for _id in data_out])
 
     print("Saving data...")

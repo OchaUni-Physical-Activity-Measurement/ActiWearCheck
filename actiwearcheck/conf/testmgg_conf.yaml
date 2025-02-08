@@ -26,6 +26,6 @@ fitabase_series:
   device_name: "DeviceName"
   synch: "SyncDateUTC"
 drop_na: True
-debug: True
+debug: False
 subjectwise_output: False       # if True, one file per subject
 output_basename: "actiwear"     # can also be an absolute path, without file extension
