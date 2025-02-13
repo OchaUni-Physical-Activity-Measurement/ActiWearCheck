@@ -241,8 +241,9 @@ if __name__ == "__main__":
 			period = "max"
 			end_date = None
 		else:
-			base_date = datetime.datetime.strptime(df.iloc[-1,1],"%m/%d/%Y %I:%M:%S %p").strftime("%Y-%m-%d")
+			base_date = datetime.datetime.strptime(df.iloc[-2,1],"%m/%d/%Y %I:%M:%S %p").strftime("%Y-%m-%d")
 			end_date = datetime.datetime.now().strftime("%Y-%m-%d")
+			print(base_date, end_date)
 			period = None
 		for activity in _eq_activity_list:
 			print(activity)
