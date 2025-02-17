@@ -255,8 +255,8 @@ def ActiWearCheck(data_path,configurations, default_format="fitabase", debug=Fal
         minute_day: boolean (default = True)
         An option to evaluate valid wear based on the ratio of minute data (steps and calories) resampled to day and daily data obtained from daily summarize files.
 
-        minute day_param: float between 0.0 and 1.0 (default = 0.9)
-        ratio of difference between "per day" data, and "per minute" data resampled by day, to be used as evaluation criteria when  = True.
+        minute_day_param: float between 0.0 and 1.0 (default = 0.9)
+        ratio between "per day" data, and "per minute" data resampled by day to evaluate possible data loss, used when minute_day is True.
 
         synch_check: boolean (default = False)
         an option to evaluate the validity of data based on the interval between two synchronization dates.
