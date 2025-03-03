@@ -23,7 +23,7 @@ The current configuration file accepts 3 different methods for evaluation of val
 
 ### main options
 
-- <strong>"steps"</strong>: a minimum number of steps ("steps_param") is required to consider a day as valid.
+- <i>"steps": a minimum number of steps ("steps_param") is required to consider a day as valid.</i> <strong>[discontinued; became a full method; see "steps_day"]</strong>
 - <strong>"minute_day"</strong>: the ratio of minute data (steps and calories) resampled to day and daily data obtained from daily summarize files should be over a given decimal between 0 and 1 ("minute_day_param") to consider a day as valid.
 - <strong>"waking"</strong>: only minutes between 5:00 and 22:59 are considered for the evaluation.
 - <strong>"synch_check"</strong>: evaluate the validity of data based on the interval between two synchronization dates. Interval criteria, which depend on device specifications, can be found in <a ref="https://github.com/OchaUni-Physical-Activity-Measurement/ActiWearCheck/blob/main/actiwearcheck/devices/20241015_devices.yaml">./ActiWearCheck/actiwearcheck/devices/20241015_devices.yaml</a>.
