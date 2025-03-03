@@ -20,6 +20,8 @@ The current configuration file accepts 3 different methods for evaluation of val
 - <strong>"hr_continue"</strong>: a minimum number of minutes with heart rate data is required. The suggested default configuration is looking for days with at least 600 minutes of hear rate data.
 - <strong>"calories_continue"</strong>: a minimum number of minutes with energy expenditure data above the resting metabolic rest is required. The suggested default configuration is looking for days with at least 600 minutes above the resting metabolic rate.
 - <strong>"calories_hourly"</strong>: a minimum of hours containing at least a given number of minutes with energy expenditure above the resting metabolic rate. The suggested default configuration is looking for days with at least 10 hours that contain at least 1 minute above the resting metabolic rate.
+- <strong>"steps_day"</strong>: a minimum number of step is required. The current default configuration is looking for days with at least 1 step.
+- <strong>"steps_hourly"</strong>: a minimum of hours containing at least a given number of steps. The suggested default configuration is looking for days with at least 10 hours that contain at least 1 step.
 
 ### main options
 
@@ -66,6 +68,12 @@ the interval criteria depends on the device specifications (currently supported 
 waking: boolean (default = False)
 if True, conduct the valid wear evaluation between 5:00 and 22:59 only.
 cannot currenlty be used for method = 'hr_continue'
+
+waking: boolean (default = False)
+if waking is True, only hours define in "waking_hours" will be taken into account
+
+waking_hours: [str written as "HH:MM", str written as "HH:MM"] (default = ["5:00", "22:59"])
+range of time to be included in the analysis
 
 fitabase_suffixes:
 string to be found in fitabase file names for hr, minute calories, daily calories, minutes steps, daily steps and synch data.
