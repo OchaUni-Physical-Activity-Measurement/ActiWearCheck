@@ -30,6 +30,23 @@ The current configuration file accepts 3 different methods for evaluation of val
 - <strong>"waking"</strong>: only minutes between between two defined times of the day are considered for the evaluation. The suggested default configuration is analysing data between 5:00 and 22:59.
 - <strong>"synch_check"</strong>: evaluate the validity of data based on the interval between two synchronization dates. Interval criteria, which depend on device specifications, can be found in <a ref="https://github.com/OchaUni-Physical-Activity-Measurement/ActiWearCheck/blob/main/actiwearcheck/devices/20241015_devices.yaml">./ActiWearCheck/actiwearcheck/devices/20241015_devices.yaml</a>.
 
+### data format
+
+Data should be provided in csv files. The naming convention for the files is ```[Subject ID]_[suffix].csv```, where the suffix for each evaluation method is specified in the configuration file. The name of the column used by the various methods is specified in the configuration file under the ```[format]_series``` entry.
+
+- <strong>"hr"</strong>: used by "hr_continue". Should provide a ```Day``` column and a column (specified in configuration; default: ```TotalMinutesWearTime```) containing the total detected wear time for each day.
+- <strong>"calories_minutes"</strong>: used by the "calories_continue" and "calories_hourly" methods. Should provide a ```ActivityMinute``` column and a column (specified in configuration; default: ```Calories```) containing the estimated energy expenditure for each minute.
+- <strong>"calories_day"</strong>: used by the "minute_day" option to check that data was not lost on a given day. Should provide a ```Day``` column and a column (same name as for "calories_minutes") containing the estimated energy expenditure for each day.
+- <strong>"steps_minutes"</strong>: used by the "steps_hourly" method. Should provide a ```ActivityMinute``` column and a column (specified in configuration; default: ```Steps```) containing the estimated number of steps for each minute.
+- <strong>"steps_day"</strong>: used by the "steps_day" method. Should provide a ```Day``` column and a column (specified in configuration; default: ```StepTotal```) containing the estimated number of steps for each day.
+- <strong>"synch"</strong>: used by the "synch_check" option and to store information about the device. Should provide
+  - a ```DateTime``` column (same format as ```ActivityMinute```) providing the date and time at which the data were read
+  - a ```SyncDateUTC``` column (same format as ```ActivityMinute```) containing the last device synching event at the time (if the date are directly read from a given device, those two values should be identical)
+  - a ```Provider``` column, containing information about the device provider (e.g., fitbit)
+  - a ```Device``` column, containing the name of the device being worn
+- <strong>Day format</strong>: month/day/year. Python syntax: ```%m/%d/%Y```
+- <strong>Datetime format</strong>: month/day/year hours(12H format)/minute/second AM or PM. Python syntax: ```%m/%d/%Y %I:%M:%S %p```
+
 #### full documentation (help)
 ```
 method: 'hr_continue' (default), 'calories_continue', 'calories_hourly', 'steps_day', 'steps_hourly', 'all'
