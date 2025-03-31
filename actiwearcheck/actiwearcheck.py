@@ -343,7 +343,7 @@ def ActiWearCheck(data_path,configurations, default_format="fitabase", debug=Fal
             series=configurations[f"{data_format}_series"]["calories"]
             data_min=pd.read_csv(file).set_index("ActivityMinute")
             data_min.index = pd.to_datetime(data_min.index,format="%m/%d/%Y %I:%M:%S %p")
-            data_min['RMR'] = data_min.resample('D')[series].transform('min')
+            data_min['BMR'] = data_min.resample('D')[series].transform('min')
             data=data_min.resample("D").sum()
             if configurations["minute_day"]:              
                 data_align_min = data   
@@ -352,20 +352,20 @@ def ActiWearCheck(data_path,configurations, default_format="fitabase", debug=Fal
           
             if "calories_hourly" in configurations["method"]:
             # Taken from Method 2 (Matt, see below)
-                data_min['minAboveRMR'] = (data_min[series] > data_min['RMR']).astype(int)
-                data_min['hourAboveRMR'] = data_min['minAboveRMR'].resample('h').sum() >= configurations["calories_hourly"][1]
+                data_min['minAboveBMR'] = (data_min[series] > data_min['BMR']).astype(int)
+                data_min['hourAboveBMR'] = data_min['minAboveBMR'].resample('h').sum() >= configurations["calories_hourly"][1]
                 if configurations["waking"]:
-                    data['hourAboveRMR'] = data_min.between_time(configurations["waking_hours"][0],configurations["waking_hours"][1])['hourAboveRMR'].resample('D').sum().to_frame()    
+                    data['hourAboveBMR'] = data_min.between_time(configurations["waking_hours"][0],configurations["waking_hours"][1])['hourAboveBMR'].resample('D').sum().to_frame()    
                 else:
-                    data['hourAboveRMR'] = data_min['hourAboveRMR'].resample('D').sum().to_frame()    
-                data['Cal-worn(per-hour)'] = data['hourAboveRMR'] >= configurations["calories_hourly"][0]  
+                    data['hourAboveBMR'] = data_min['hourAboveBMR'].resample('D').sum().to_frame()    
+                data['Cal-worn(per-hour)'] = data['hourAboveBMR'] >= configurations["calories_hourly"][0]  
             
             if "calories_continue" in configurations["method"]:
                 if configurations["waking"]:    
-                    data['nMinAboveRMR'] = data_min.between_time(configurations["waking_hours"][0],configurations["waking_hours"][1])[data_min[series] > data_min['RMR']].resample('D').count()[series]
+                    data['nMinAboveBMR'] = data_min.between_time(configurations["waking_hours"][0],configurations["waking_hours"][1])[data_min[series] > data_min['BMR']].resample('D').count()[series]
                 else:
-                    data['nMinAboveRMR'] = data_min[data_min[series] > data_min['RMR']].resample('D').count()[series]
-                data['Cal-worn'] = data['nMinAboveRMR'] >= configurations["calories_continue"]
+                    data['nMinAboveBMR'] = data_min[data_min[series] > data_min['BMR']].resample('D').count()[series]
+                data['Cal-worn'] = data['nMinAboveBMR'] >= configurations["calories_continue"]
             
             if configurations["minute_day"]:
                 data_align_day = pd.read_csv(files["calories_day"][align_count]).set_index("ActivityDay")
