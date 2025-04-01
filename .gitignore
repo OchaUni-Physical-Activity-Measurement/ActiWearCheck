@@ -12,3 +12,9 @@
 .fseventsd
 *~
 
+# data used in "analysis/"
+actiwear_20241017.csv
+calories_per_minute.csv
+calories_per_minutes.csv
+steps_per_minute.csv
+steps_per_minutes.csv
